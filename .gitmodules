@@ -1,6 +1,0 @@
-[submodule "third_parties/mcap"]
-	path = third_parties/mcap
-	url = https://github.com/foxglove/mcap.git
-	branch = f87352f
-[submodule "third_parties/mcap/"]
-	branch = releases/cpp/v1.3.0
