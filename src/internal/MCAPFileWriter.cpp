@@ -4,15 +4,215 @@ namespace mcap_wrapper
 {
     MCAPFileWriter::MCAPFileWriter()
     {
+        _continue_writing = false;
     }
+
+    MCAPFileWriter::~MCAPFileWriter(){
+        close();
+    }
+
+    bool MCAPFileWriter::close(){
+        if(_continue_writing){
+            _continue_writing = false;
+            _write_notifier.notify_all();
+            _writing_thread->join();
+            delete _writing_thread;
+            _file_writer.close();
+        }
+        return true;
+    }
+
+    bool MCAPFileWriter::is_open(){
+        return _continue_writing;
+    }
+
     bool MCAPFileWriter::open(std::string file_name)
     {
-        mcap::Status open_status = _file_writer.open(file_name);
-        if(open_status.code == mcap::StatusCode::Success)
+        // Close file if it already open
+        if(is_open())
+            close();
+
+        // Create file (erase previous one if it existed)
+        mcap::McapWriterOptions options("");
+        mcap::Status open_status = _file_writer.open(file_name, options);
+        if(open_status.code == mcap::StatusCode::Success){
+            // Create writing thread:
+            _writing_thread = new std::thread(&MCAPFileWriter::run, this);
+            _continue_writing = true;
             return true;
+        }
         else    
             std::cerr << "Error occur during the initialization of file " << file_name << ". Error message: " << open_status.message << std::endl;
         return false;
+    }
+
+    bool MCAPFileWriter::is_schema_present(std::string channel_name){
+        return _all_channels.count(channel_name);
+    }
+
+    void MCAPFileWriter::infer_schema(std::string channel_name, nlohmann::json sample){
+        // Check if additionnal informations are provided:
+        std::string description = "Geneated by wrapper based on provided JSON";
+        if(sample.count("__private_foxglove_description__"))
+            description = sample["__private_foxglove_description__"];
+        std::string comment = "";
+        if(sample.count("__private_foxglove_comment__"))
+            comment = sample["__private_foxglove_comment__"];
+
+        // Create schema:
+        nlohmann::json foxglove_schema;
+        foxglove_schema["title"] = channel_name;
+        foxglove_schema["description"] = description;
+        foxglove_schema["$comment"] = comment;
+        foxglove_schema["type"] = "object";
+        foxglove_schema["properties"] = infer_property_of_sample(sample);
+
+        create_schema(channel_name, foxglove_schema);
+    }
+
+    void MCAPFileWriter::create_schema(std::string channel_name, nlohmann::json schema){
+        std::lock_guard<std::mutex> file_writer_lg(_file_writer_mtx);
+        // Create schema and channel:
+        mcap::Schema schema_obj(channel_name, "jsonschema", schema.dump());
+        _file_writer.addSchema(schema_obj);
+        mcap::Channel channel_obj(channel_name, "json", schema_obj.id);
+        _file_writer.addChannel(channel_obj);
+        // Add it to existing schema:
+        _all_channels[channel_name] = channel_obj;  
+    }   
+
+    void MCAPFileWriter::push_sample(std::string channel_name, nlohmann::json sample, uint64_t timestamp){
+        if(!is_schema_present(channel_name))
+            infer_schema(channel_name, sample);  
+        mcap::Message msg;
+        msg.channelId = _all_channels[channel_name].id;
+        // Since we do not know when data is emitted we set `publishTime` equal to `logTime`
+        msg.logTime = timestamp;
+        msg.publishTime = timestamp;
+        msg.sequence = 0;   // Not pertinent here
+        std::string serialized_sample = sample.dump();
+        std::byte * data_bytes = new std::byte[serialized_sample.size()];
+        memcpy(data_bytes, reinterpret_cast<const std::byte*>(serialized_sample.data()), serialized_sample.size());
+        msg.data = data_bytes;
+        msg.dataSize = serialized_sample.size();
+        // Push the sample into write queue
+        std::lock_guard<std::mutex> data_queue_lg(_data_queue_mtx);
+        _data_queue.push(msg);
+        // Notify writing thread that some work need to be perform:
+        _write_notifier.notify_all();
+    }
+
+    //
+    // Protected methods
+    //
+    void MCAPFileWriter::run(){
+        while(1){
+            std::mutex sleep_until_new_data_mtx;
+            std::unique_lock<std::mutex> sleep_until_new_data_ul(sleep_until_new_data_mtx);
+            _write_notifier.wait_for(sleep_until_new_data_ul, std::chrono::milliseconds(16));
+
+            // Check ending condition
+            if(!_continue_writing && _data_queue.size() == 0) // Check that no data are being waiting to be writted
+                break;
+
+            // Protect `_data_queue` and copy it data
+            std::queue<mcap::Message> data_to_write;
+            {
+                std::lock_guard<std::mutex> data_queue_lg(_data_queue_mtx);
+                std::swap(_data_queue, data_to_write);
+            }
+
+            // Write data:
+            while(data_to_write.size()){
+                // Pop data
+                mcap::Message data = data_to_write.front();
+                data_to_write.pop();
+                // Write it to file
+                std::lock_guard<std::mutex> file_writer_lg(_file_writer_mtx);
+                mcap::Status write_status = _file_writer.write(data);
+                if(write_status.code != mcap::StatusCode::Success)
+                    std::cerr << "Error occur in MCAP message writing. Message: " << write_status.message << std::endl;
+                // Delete previous allocated data:
+                delete data.data;
+            }
+            
+        }
+    }
+
+    nlohmann::json MCAPFileWriter::infer_property_of_sample(nlohmann::json sample, bool recursive_call){
+        nlohmann::json out;
+        for(auto &kv: sample.items()){
+            // Handle string case
+            if(kv.value().is_string()){
+                out[kv.key()] = nlohmann::json::object();
+                out[kv.key()]["type"] = "string";
+                out[kv.key()]["comment"] = "Generated by wrapper";
+            }
+            // Handle boolean case
+            else if(kv.value().is_boolean()){
+                out[kv.key()] = nlohmann::json::object();
+                out[kv.key()]["type"] = "boolean";
+                out[kv.key()]["comment"] = "Generated by wrapper";
+            }
+            // Handle bytes case
+            else if(kv.value().is_binary()){
+                out[kv.key()] = nlohmann::json::object();
+                out[kv.key()]["type"] = "bytes";
+                out[kv.key()]["comment"] = "Generated by wrapper";
+            }
+            // Handle float case
+            else if(kv.value().is_number_float()){
+                out[kv.key()] = nlohmann::json::object();
+                out[kv.key()]["type"] = "number";
+                out[kv.key()]["comment"] = "Generated by wrapper";
+            }
+            // Handle uint32 case
+            else if(kv.value().is_number_unsigned()){
+                out[kv.key()] = nlohmann::json::object();
+                out[kv.key()]["type"] = "number";
+                out[kv.key()]["comment"] = "Generated by wrapper";
+            }
+            // Handle int32 case
+            else if(kv.value().is_number_integer()){
+                out[kv.key()] = nlohmann::json::object();
+                out[kv.key()]["type"] = "number";
+                out[kv.key()]["comment"] = "Generated by wrapper";
+            }
+            // Handle other number types:
+            else if(kv.value().is_number()){
+                out[kv.key()] = nlohmann::json::object();
+                out[kv.key()]["type"] = "number";
+                out[kv.key()]["comment"] = "Generated by wrapper";
+            }
+            // Handle recursive schema:
+            else if(kv.value().is_object()){
+                out[kv.key()] = nlohmann::json::object();
+                out[kv.key()]["type"] = "object";
+                out[kv.key()]["comment"] = "Generated by wrapper";
+                out[kv.key()]["properties"]  = infer_property_of_sample(kv.value(), true);
+            }
+        }
+        // // Add timestamp field if not recursive call
+        // if(!recursive_call){
+        //     out["timestamp"] = nlohmann::json::object();
+        //     out["timestamp"]["type"] = "object";
+        //     out["timestamp"]["title"] = "time";
+        //     out["timestamp"]["properties"] = nlohmann::json::object();
+        //     out["timestamp"]["properties"]["sec"] = nlohmann::json::object();
+        //     out["timestamp"]["properties"]["sec"]["type"] = "integer";
+        //     out["timestamp"]["properties"]["sec"]["minimum"] = 0;
+        //     out["timestamp"]["properties"] = nlohmann::json::object();
+        //     out["timestamp"]["properties"]["nsec"] = nlohmann::json::object();
+        //     out["timestamp"]["properties"]["nsec"]["type"] = "integer";
+        //     out["timestamp"]["properties"]["nsec"]["minimum"] = 0;
+        //     out["timestamp"]["properties"]["nsec"]["maximum"] = 999999999;
+        // }
+        
+        return out;
+    }
+
+    MCAPFileWriter& MCAPFileWriter::operator=(const MCAPFileWriter& object){
+        return *this;
     }
 
 };

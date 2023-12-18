@@ -14,6 +14,17 @@ namespace mcap_wrapper{
      */
     bool open_file(std::string file_path);
     /**
+     * @brief Close file corresponding to the `file_path`
+     * 
+     * @param file_path path to the file to close
+     */
+    void close_file(std::string file_path);
+    /**
+     * @brief Close all files opened
+     * 
+     */
+    void close_all_files();
+    /**
      * @brief Write image into MCAP. This function is thread safe.
      * 
      * @param identifier identifier to where write the input image
