@@ -20,7 +20,7 @@ int main(int argc, char **argv){
         test_json["d"]["b"] = "titi";
         test_json["d"]["c"] = 0;
 
-        // Pus it to file
+        // Put it to file
         mcap_wrapper::write_JSON("test_json", test_json.dump(), std::chrono::system_clock::now().time_since_epoch().count());
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
