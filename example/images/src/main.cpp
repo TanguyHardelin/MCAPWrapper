@@ -18,13 +18,13 @@ int main(int argc, char **argv){
     // Write data into file:
     for(unsigned i=0; i<20; i++){
         cv::Mat image_to_save = image.clone();
-        
+
         // Simple image manipulation
         if(i%2 == 0)
             cv::cvtColor(image_to_save.clone(), image_to_save, cv::COLOR_BGRA2GRAY);
         
         // Save image:
-        mcap_wrapper::write_image("simple.mcap", image_to_save, std::chrono::system_clock::now().time_since_epoch().count());
+        mcap_wrapper::write_image("simple_image", image_to_save, std::chrono::system_clock::now().time_since_epoch().count());
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

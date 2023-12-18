@@ -89,6 +89,7 @@ namespace mcap_wrapper
         std::thread * _writing_thread;                          // Writing thread
         bool _continue_writing;                                 // Variable used for indicating to the writing thread if write must continue;
         std::condition_variable _write_notifier;                // Used for signaling new data to write for writing thread
+        std::map<std::string, std::string> _defined_schema;     // Is usefull for keeping trace of defined schema
     };
 
     

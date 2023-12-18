@@ -73,7 +73,10 @@ namespace mcap_wrapper
     void MCAPFileWriter::create_schema(std::string channel_name, nlohmann::json schema){
         std::lock_guard<std::mutex> file_writer_lg(_file_writer_mtx);
         // Create schema and channel:
-        mcap::Schema schema_obj(channel_name, "jsonschema", schema.dump());
+        std::string schema_title = channel_name;
+        if(schema.count("title"))
+            schema_title = schema["title"];
+        mcap::Schema schema_obj(schema_title, "jsonschema", schema.dump());
         _file_writer.addSchema(schema_obj);
         mcap::Channel channel_obj(channel_name, "json", schema_obj.id);
         _file_writer.addChannel(channel_obj);
@@ -192,21 +195,6 @@ namespace mcap_wrapper
                 out[kv.key()]["properties"]  = infer_property_of_sample(kv.value(), true);
             }
         }
-        // // Add timestamp field if not recursive call
-        // if(!recursive_call){
-        //     out["timestamp"] = nlohmann::json::object();
-        //     out["timestamp"]["type"] = "object";
-        //     out["timestamp"]["title"] = "time";
-        //     out["timestamp"]["properties"] = nlohmann::json::object();
-        //     out["timestamp"]["properties"]["sec"] = nlohmann::json::object();
-        //     out["timestamp"]["properties"]["sec"]["type"] = "integer";
-        //     out["timestamp"]["properties"]["sec"]["minimum"] = 0;
-        //     out["timestamp"]["properties"] = nlohmann::json::object();
-        //     out["timestamp"]["properties"]["nsec"] = nlohmann::json::object();
-        //     out["timestamp"]["properties"]["nsec"]["type"] = "integer";
-        //     out["timestamp"]["properties"]["nsec"]["minimum"] = 0;
-        //     out["timestamp"]["properties"]["nsec"]["maximum"] = 999999999;
-        // }
         
         return out;
     }
