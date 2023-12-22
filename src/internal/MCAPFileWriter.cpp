@@ -7,12 +7,15 @@ namespace mcap_wrapper
         _continue_writing = false;
     }
 
-    MCAPFileWriter::~MCAPFileWriter(){
+    MCAPFileWriter::~MCAPFileWriter()
+    {
         close();
     }
 
-    bool MCAPFileWriter::close(){
-        if(_continue_writing){
+    bool MCAPFileWriter::close()
+    {
+        if (_continue_writing)
+        {
             _continue_writing = false;
             _write_notifier.notify_all();
             _writing_thread->join();
@@ -22,41 +25,45 @@ namespace mcap_wrapper
         return true;
     }
 
-    bool MCAPFileWriter::is_open(){
+    bool MCAPFileWriter::is_open()
+    {
         return _continue_writing;
     }
 
     bool MCAPFileWriter::open(std::string file_name)
     {
         // Close file if it already open
-        if(is_open())
+        if (is_open())
             close();
 
         // Create file (erase previous one if it existed)
         mcap::McapWriterOptions options("");
         mcap::Status open_status = _file_writer.open(file_name, options);
-        if(open_status.code == mcap::StatusCode::Success){
+        if (open_status.code == mcap::StatusCode::Success)
+        {
             // Create writing thread:
             _writing_thread = new std::thread(&MCAPFileWriter::run, this);
             _continue_writing = true;
             return true;
         }
-        else    
+        else
             std::cerr << "Error occur during the initialization of file " << file_name << ". Error message: " << open_status.message << std::endl;
         return false;
     }
 
-    bool MCAPFileWriter::is_schema_present(std::string channel_name){
+    bool MCAPFileWriter::is_schema_present(std::string channel_name)
+    {
         return _all_channels.count(channel_name);
     }
 
-    void MCAPFileWriter::infer_schema(std::string channel_name, nlohmann::json sample){
+    void MCAPFileWriter::infer_schema(std::string channel_name, nlohmann::json sample)
+    {
         // Check if additionnal informations are provided:
         std::string description = "Geneated by wrapper based on provided JSON";
-        if(sample.count("__private_foxglove_description__"))
+        if (sample.count("__private_foxglove_description__"))
             description = sample["__private_foxglove_description__"];
         std::string comment = "";
-        if(sample.count("__private_foxglove_comment__"))
+        if (sample.count("__private_foxglove_comment__"))
             comment = sample["__private_foxglove_comment__"];
 
         // Create schema:
@@ -70,32 +77,34 @@ namespace mcap_wrapper
         create_schema(channel_name, foxglove_schema);
     }
 
-    void MCAPFileWriter::create_schema(std::string channel_name, nlohmann::json schema){
+    void MCAPFileWriter::create_schema(std::string channel_name, nlohmann::json schema)
+    {
         std::lock_guard<std::mutex> file_writer_lg(_file_writer_mtx);
         // Create schema and channel:
         std::string schema_title = channel_name;
-        if(schema.count("title"))
+        if (schema.count("title"))
             schema_title = schema["title"];
         mcap::Schema schema_obj(schema_title, "jsonschema", schema.dump());
         _file_writer.addSchema(schema_obj);
         mcap::Channel channel_obj(channel_name, "json", schema_obj.id);
         _file_writer.addChannel(channel_obj);
         // Add it to existing schema:
-        _all_channels[channel_name] = channel_obj;  
-    }   
+        _all_channels[channel_name] = channel_obj;
+    }
 
-    void MCAPFileWriter::push_sample(std::string channel_name, nlohmann::json sample, uint64_t timestamp){
-        if(!is_schema_present(channel_name))
-            infer_schema(channel_name, sample);  
+    void MCAPFileWriter::push_sample(std::string channel_name, nlohmann::json sample, uint64_t timestamp)
+    {
+        if (!is_schema_present(channel_name))
+            infer_schema(channel_name, sample);
         mcap::Message msg;
         msg.channelId = _all_channels[channel_name].id;
         // Since we do not know when data is emitted we set `publishTime` equal to `logTime`
         msg.logTime = timestamp;
         msg.publishTime = timestamp;
-        msg.sequence = 0;   // Not pertinent here
+        msg.sequence = 0; // Not pertinent here
         std::string serialized_sample = sample.dump();
-        std::byte * data_bytes = new std::byte[serialized_sample.size()];
-        memcpy(data_bytes, reinterpret_cast<const std::byte*>(serialized_sample.data()), serialized_sample.size());
+        std::byte *data_bytes = new std::byte[serialized_sample.size()];
+        memcpy(data_bytes, reinterpret_cast<const std::byte *>(serialized_sample.data()), serialized_sample.size());
         msg.data = data_bytes;
         msg.dataSize = serialized_sample.size();
         // Push the sample into write queue
@@ -108,14 +117,16 @@ namespace mcap_wrapper
     //
     // Protected methods
     //
-    void MCAPFileWriter::run(){
-        while(1){
+    void MCAPFileWriter::run()
+    {
+        while (1)
+        {
             std::mutex sleep_until_new_data_mtx;
             std::unique_lock<std::mutex> sleep_until_new_data_ul(sleep_until_new_data_mtx);
             _write_notifier.wait_for(sleep_until_new_data_ul, std::chrono::milliseconds(16));
 
             // Check ending condition
-            if(!_continue_writing && _data_queue.size() == 0) // Check that no data are being waiting to be writted
+            if (!_continue_writing && _data_queue.size() == 0) // Check that no data are being waiting to be writted
                 break;
 
             // Protect `_data_queue` and copy it data
@@ -126,80 +137,194 @@ namespace mcap_wrapper
             }
 
             // Write data:
-            while(data_to_write.size()){
+            while (data_to_write.size())
+            {
                 // Pop data
                 mcap::Message data = data_to_write.front();
                 data_to_write.pop();
                 // Write it to file
                 std::lock_guard<std::mutex> file_writer_lg(_file_writer_mtx);
                 mcap::Status write_status = _file_writer.write(data);
-                if(write_status.code != mcap::StatusCode::Success)
+                if (write_status.code != mcap::StatusCode::Success)
                     std::cerr << "Error occur in MCAP message writing. Message: " << write_status.message << std::endl;
                 // Delete previous allocated data:
                 delete data.data;
             }
-            
         }
     }
 
-    nlohmann::json MCAPFileWriter::infer_property_of_sample(nlohmann::json sample, bool recursive_call){
+    nlohmann::json MCAPFileWriter::infer_property_of_sample(nlohmann::json sample, bool recursive_call)
+    {
         nlohmann::json out;
-        for(auto &kv: sample.items()){
+        for (auto &kv : sample.items())
+        {
             // Handle string case
-            if(kv.value().is_string()){
+            if (kv.value().is_string())
+            {
                 out[kv.key()] = nlohmann::json::object();
                 out[kv.key()]["type"] = "string";
                 out[kv.key()]["comment"] = "Generated by wrapper";
             }
             // Handle boolean case
-            else if(kv.value().is_boolean()){
+            else if (kv.value().is_boolean())
+            {
                 out[kv.key()] = nlohmann::json::object();
                 out[kv.key()]["type"] = "boolean";
                 out[kv.key()]["comment"] = "Generated by wrapper";
             }
             // Handle bytes case
-            else if(kv.value().is_binary()){
+            else if (kv.value().is_binary())
+            {
                 out[kv.key()] = nlohmann::json::object();
                 out[kv.key()]["type"] = "bytes";
                 out[kv.key()]["comment"] = "Generated by wrapper";
             }
             // Handle float case
-            else if(kv.value().is_number_float()){
+            else if (kv.value().is_number_float())
+            {
                 out[kv.key()] = nlohmann::json::object();
                 out[kv.key()]["type"] = "number";
                 out[kv.key()]["comment"] = "Generated by wrapper";
             }
             // Handle uint32 case
-            else if(kv.value().is_number_unsigned()){
+            else if (kv.value().is_number_unsigned())
+            {
                 out[kv.key()] = nlohmann::json::object();
                 out[kv.key()]["type"] = "number";
                 out[kv.key()]["comment"] = "Generated by wrapper";
             }
             // Handle int32 case
-            else if(kv.value().is_number_integer()){
+            else if (kv.value().is_number_integer())
+            {
                 out[kv.key()] = nlohmann::json::object();
                 out[kv.key()]["type"] = "number";
                 out[kv.key()]["comment"] = "Generated by wrapper";
             }
             // Handle other number types:
-            else if(kv.value().is_number()){
+            else if (kv.value().is_number())
+            {
                 out[kv.key()] = nlohmann::json::object();
                 out[kv.key()]["type"] = "number";
                 out[kv.key()]["comment"] = "Generated by wrapper";
             }
             // Handle recursive schema:
-            else if(kv.value().is_object()){
+            else if (kv.value().is_object())
+            {
                 out[kv.key()] = nlohmann::json::object();
                 out[kv.key()]["type"] = "object";
                 out[kv.key()]["comment"] = "Generated by wrapper";
-                out[kv.key()]["properties"]  = infer_property_of_sample(kv.value(), true);
+                out[kv.key()]["properties"] = infer_property_of_sample(kv.value(), true);
             }
         }
-        
+
         return out;
     }
+    void MCAPFileWriter::create_3D_object(std::string object_name, std::string frame_id, bool frame_locked)
+    {
+        _all_3d_object[object_name] = Internal3DObject(frame_id, frame_locked);
+    }
 
-    MCAPFileWriter& MCAPFileWriter::operator=(const MCAPFileWriter& object){
+    bool MCAPFileWriter::add_metadata_to_3d_object(std::string object_name, std::pair<std::string, std::string> metadata)
+    {
+        if(_all_3d_object.count(object_name) == 0)
+            return false;
+        return _all_3d_object[object_name].add_metadata(metadata);
+    }
+
+    bool MCAPFileWriter::add_arrow_to_3d_object(std::string object_name,
+                                                Eigen::Matrix4f pose,
+                                                double shaft_length,
+                                                double shaft_diameter,
+                                                double head_length,
+                                                double head_diameter,
+                                                std::array<double, 4> color)
+    {
+        if(_all_3d_object.count(object_name) == 0)
+            return false;
+        return _all_3d_object[object_name].add_arrow(pose, shaft_length, shaft_diameter, head_length, head_diameter, color);
+    }
+
+    bool MCAPFileWriter::add_cube_to_3d_object(std::string object_name,
+                                               Eigen::Matrix4f pose,
+                                               std::array<double, 3> size,
+                                               std::array<double, 4> color)
+    {
+        if(_all_3d_object.count(object_name) == 0)
+            return false;
+        return _all_3d_object[object_name].add_cube(pose, size, color);
+    }
+
+    bool MCAPFileWriter::add_sphere_to_3d_object(std::string object_name,
+                                                 Eigen::Matrix4f pose,
+                                                 std::array<double, 3> size,
+                                                 std::array<double, 4> color)
+    {
+        if(_all_3d_object.count(object_name) == 0)
+            return false;
+        return _all_3d_object[object_name].add_sphere(pose, size, color);
+    }
+
+    bool MCAPFileWriter::add_cylinder_to_3d_object(std::string object_name,
+                                                   Eigen::Matrix4f pose,
+                                                   double bottom_scale,
+                                                   double top_scale,
+                                                   std::array<double, 3> size,
+                                                   std::array<double, 4> color)
+    {
+        if(_all_3d_object.count(object_name) == 0)
+            return false;
+        return _all_3d_object[object_name].add_cylinder(pose, bottom_scale, top_scale, size, color);
+    }
+
+    bool MCAPFileWriter::add_line_to_3d_object(std::string object_name,
+                                               Eigen::Matrix4f pose,
+                                               double thickness,
+                                               bool scale_invariant,
+                                               std::vector<Eigen::Vector3d> points,
+                                               std::array<double, 4> color,
+                                               std::vector<std::array<double, 4>> colors,
+                                               std::vector<uint32_t> indices)
+    {
+        if(_all_3d_object.count(object_name) == 0)
+            return false;
+        return _all_3d_object[object_name].add_line(pose, thickness, scale_invariant, points, color, colors, indices);
+    }
+
+    bool MCAPFileWriter::add_triangle_to_3d_object(std::string object_name,
+                                                   Eigen::Matrix4f pose,
+                                                   std::vector<Eigen::Vector3d> points,
+                                                   std::array<double, 4> color,
+                                                   std::vector<std::array<double, 4>> colors,
+                                                   std::vector<uint32_t> indices)
+    {
+        if(_all_3d_object.count(object_name) == 0)
+            return false;
+        return _all_3d_object[object_name].add_triangle(pose, points, color, colors, indices);
+    }
+
+    bool MCAPFileWriter::add_text_to_3d_object(std::string object_name,
+                                               Eigen::Matrix4f pose,
+                                               bool billboard,
+                                               double font_size,
+                                               bool scale_invariant,
+                                               std::array<double, 4> color,
+                                               std::string text)
+    {
+        if(_all_3d_object.count(object_name) == 0)
+            return false;
+        return _all_3d_object[object_name].add_text(pose, billboard, font_size, scale_invariant, color, text);
+    }
+    
+    bool MCAPFileWriter::write_3d_object(std::string object_name, uint64_t timestamp)
+    {
+        if(_all_3d_object.count(object_name) == 0)
+            return false;
+        std::string object_serialized = _all_3d_object[object_name].serialize();
+        push_sample(object_name, object_serialized, timestamp);
+    }
+
+    MCAPFileWriter &MCAPFileWriter::operator=(const MCAPFileWriter &object)
+    {
         return *this;
     }
 
