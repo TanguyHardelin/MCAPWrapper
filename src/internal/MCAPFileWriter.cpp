@@ -221,7 +221,7 @@ namespace mcap_wrapper
     }
     void MCAPFileWriter::create_3D_object(std::string object_name, std::string frame_id, bool frame_locked)
     {
-        _all_3d_object[object_name] = Internal3DObject(frame_id, frame_locked);
+        _all_3d_object[object_name] = Internal3DObject (object_name, frame_id, frame_locked);
     }
 
     bool MCAPFileWriter::add_metadata_to_3d_object(std::string object_name, std::pair<std::string, std::string> metadata)
@@ -319,8 +319,24 @@ namespace mcap_wrapper
     {
         if(_all_3d_object.count(object_name) == 0)
             return false;
-        std::string object_serialized = _all_3d_object[object_name].serialize();
-        push_sample(object_name, object_serialized, timestamp);
+        // Set timestamp of current object:
+        _all_3d_object[object_name].set_timestamp(timestamp);
+        // Create Scene update object:
+        nlohmann::json scene_update_json;
+        scene_update_json["deletions"] = std::vector<nlohmann::json>();
+        scene_update_json["entities"] = std::vector<nlohmann::json>();
+        // Delete entity if it was present before
+        nlohmann::json deletion_json;
+        deletion_json["timestamp"] = nlohmann::json();
+        deletion_json["timestamp"]["sec"] = (uint64_t) timestamp / (uint64_t) 1e9;
+        deletion_json["timestamp"]["nsec"] = (uint64_t) timestamp % (uint64_t) 1e9;
+        deletion_json["type"] = 0;
+        deletion_json["id"] = _all_3d_object[object_name].get_id();
+        scene_update_json["deletions"].push_back(deletion_json);
+        // Re-add entity in scene
+        scene_update_json["entities"].push_back(_all_3d_object[object_name].get_description());
+        push_sample(object_name, scene_update_json, timestamp);
+        return true;
     }
 
     MCAPFileWriter &MCAPFileWriter::operator=(const MCAPFileWriter &object)

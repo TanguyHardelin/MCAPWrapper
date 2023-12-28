@@ -8,7 +8,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <map>
-#include <eigen3/Core>
+#include <Eigen/Core>
 #include "mcap/writer.hpp"
 #include "json.hpp"
 #include "Internal3DObject.h"

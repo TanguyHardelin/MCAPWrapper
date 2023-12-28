@@ -2,13 +2,16 @@
 #define __INTERNAL_3D_OBJECT_H__
 
 #include <string>
+#include <iostream>
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 #include "json.hpp"
 
 class Internal3DObject
 {
 public:
-    Internal3DObject(std::string frame_id, bool frame_locked);
+    Internal3DObject();
+    Internal3DObject(std::string object_name, std::string frame_id, bool frame_locked);
     void set_timestamp(uint64_t timestamp);
     bool add_metadata(std::pair<std::string, std::string> metadata);
     bool add_arrow(Eigen::Matrix4f pose,
@@ -46,15 +49,19 @@ public:
                   bool scale_invariant,
                   std::array<double, 4> color,
                   std::string text);
-    std::string serialize();
+    nlohmann::json get_description();
+    std::string get_id();
+
+    static nlohmann::json pose_serializer(Eigen::Matrix4f pose);
+    static nlohmann::json vector3_serializer(std::array<double, 3> vector3);
+    static nlohmann::json vector3_serializer(Eigen::Vector3d vector3);
+    static nlohmann::json color_serializer(std::array<double, 4> color);
 
 protected:
-    nlohmann::json pose_serializer(Eigen::Matrix4f pose);
-    nlohmann::json vector3_serializer(std::array<double, 3> vector3);
-    nlohmann::json vector3_serializer(Eigen::Vector3d vector3);
-    nlohmann::json color_serializer(std::array<double, 4> color);
+    
 
     nlohmann::json _object_definition;
+    std::string _object_name;
 };
 
 #endif

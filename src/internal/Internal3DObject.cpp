@@ -1,12 +1,23 @@
-#include "Internal3DObject.h"
+#include "internal/Internal3DObject.h"
 
-unsigned long long object_id = 0;
+std::map<std::string, unsigned long long> object_ids;
+unsigned long long current_id = 0;
 
-Internal3DObject::Internal3DObject(std::string frame_id, bool frame_locked)
+Internal3DObject::Internal3DObject(){
+
+}
+
+Internal3DObject::Internal3DObject(std::string object_name, std::string frame_id, bool frame_locked)
 {
+    // Copy object name
+    _object_name = object_name;
+    // Constuct object descriptor
     _object_definition = nlohmann::json();
     _object_definition["frame_id"] = frame_id;
-    _object_definition["id"] = std::to_string(object_id++);
+    if(object_ids.count(object_name) == 0){
+        object_ids[object_name] = current_id++;
+    }    
+    _object_definition["id"] = std::to_string(object_ids[object_name]);
     _object_definition["lifetime"] = 0;
     _object_definition["frame_locked"] = frame_locked;
     _object_definition["metadata"] = std::vector<nlohmann::json>();
@@ -29,10 +40,10 @@ void Internal3DObject::set_timestamp(uint64_t timestamp)
 
 bool Internal3DObject::add_metadata(std::pair<std::string, std::string> metadata)
 {
-    nlohmann::json metadata;
-    metadata["key"] = metadata.first;
-    metadata["value"] = metadata.second;
-    _object_definition["metadata"].push_back(metadata);
+    nlohmann::json metadata_obj;
+    metadata_obj["key"] = metadata.first;
+    metadata_obj["value"] = metadata.second;
+    _object_definition["metadata"].push_back(metadata_obj);
     return true;
 }
 
@@ -54,7 +65,7 @@ bool Internal3DObject::add_cube(Eigen::Matrix4f pose, std::array<double, 3> size
     nlohmann::json cube;
     cube["pose"] = pose_serializer(pose);
     cube["size"] = vector3_serializer(size);
-    cube["color"] = color;
+    cube["color"] = color_serializer(color);
     _object_definition["cubes"].push_back(cube);
     return true;
 }
@@ -133,8 +144,12 @@ bool Internal3DObject::add_text(Eigen::Matrix4f pose, bool billboard, double fon
     return true;
 }
 
-std::string Internal3DObject::serialize(){
-    return _object_definition.dump();
+nlohmann::json Internal3DObject::get_description(){
+    return _object_definition;
+}
+
+std::string Internal3DObject::get_id(){
+    return std::to_string(object_ids[_object_name]);
 }
 
 nlohmann::json Internal3DObject::pose_serializer(Eigen::Matrix4f pose)
@@ -144,12 +159,12 @@ nlohmann::json Internal3DObject::pose_serializer(Eigen::Matrix4f pose)
     out["position"]["x"] = pose(0, 3);
     out["position"]["y"] = pose(1, 3);
     out["position"]["z"] = pose(2, 3);
-    Eigen::Quaternionf orientation(pose.block<3, 3>(0, 0));
+    Eigen::Quaternion<float> orientation(pose.block<3, 3>(0, 0));
     out["orientation"] = nlohmann::json();
-    out["orientation"]["x"] = orientation[0];
-    out["orientation"]["y"] = orientation[1];
-    out["orientation"]["z"] = orientation[2];
-    out["orientation"]["w"] = orientation[3];
+    out["orientation"]["x"] = orientation.x();
+    out["orientation"]["y"] = orientation.y();
+    out["orientation"]["z"] = orientation.z();
+    out["orientation"]["w"] = orientation.w();
     return out;
 }
 

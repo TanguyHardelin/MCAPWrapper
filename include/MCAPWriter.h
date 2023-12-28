@@ -48,6 +48,16 @@ namespace mcap_wrapper
      */
     bool write_JSON(std::string identifier, std::string serialized_json, uint64_t timestamp);
     /**
+     * @brief Add frame transform that could be used for 3D and image
+     * 
+     * @param transform_name Name of the transform
+     * @param timestamp Timestamp of transform
+     * @param parent Name of the parent frame
+     * @param child Name of the child frame
+     * @param pose Transform position
+     */
+    void add_frame_transform(std::string transform_name, uint64_t timestamp, std::string parent, std::string child, Eigen::Matrix4f pose);
+    /**
      * @brief Create a 3D object that can own some primitives like triangle, rectangle, etc...
      *
      * @param object_name name of the 3D object
@@ -199,6 +209,31 @@ namespace mcap_wrapper
      * @return false Everything does wrong.
      */
     bool write_3d_object(std::string object_name, uint64_t timestamp);
+
+    /**
+     * @brief Used by add_log. Specify the level of log
+     * 
+     */
+    enum class LOG_LEVEL{
+        UNKNOWN = 0, 
+        DEBUG = 1, 
+        INFO = 2,
+        WARNING = 3,
+        ERROR = 4,
+        FATAL = 5
+    };
+    /**
+     * @brief Add log 
+     * 
+     * @param log_channel_name Name of channel that must be used for pushing logs
+     * @param timestamp Timestamp of log message
+     * @param log_level Log level
+     * @param message Log message
+     * @param name Process or node name
+     * @param file Filename
+     * @param line Line number in the file
+     */
+    void add_log(std::string log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string message, std::string name, std::string file, uint32_t line);
 
 };
 

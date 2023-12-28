@@ -1,4 +1,14 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.18)
+
+# Set C++ 17 (for mcap)
+set(CMAKE_CXX_STANDARD 17)
+
+
+# Dependencies:
+find_package(OpenCV REQUIRED)
+find_package(Eigen3 REQUIRED)
+
+include_directories(${OpenCV_INCLUDE_DIRS})
 
 # `MCAP_WRAPPER_PATH` is used for locating sources
 if(NOT MCAP_WRAPPER_PATH)
@@ -22,4 +32,4 @@ project(mcap_wrapper)
 message(MCAP_SOURCE_FILE " ${MCAP_SOURCE_FILE}")
 message(SOURCE_FILE " ${SOURCE_FILE}")
 add_library(mcap_wrapper SHARED ${SOURCE_FILE} ${MCAP_SOURCE_FILE})
-target_link_libraries(mcap_wrapper lz4 zstd)
+target_link_libraries(mcap_wrapper lz4 zstd Eigen3::Eigen ${OpenCV_LIBRARIES})
