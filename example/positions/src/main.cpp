@@ -19,7 +19,7 @@ int main(int argc, char **argv){
     Eigen::Matrix4f current_position = Eigen::Matrix4f::Identity();
 
     // Add transform:
-    // mcap_wrapper::add_frame_transform("root", std::chrono::system_clock::now().time_since_epoch().count(), "root", "", Eigen::Matrix4f::Identity());
+    mcap_wrapper::add_frame_transform("root", std::chrono::system_clock::now().time_since_epoch().count(), "map", "root", Eigen::Matrix4f::Identity());
 
     // Write data into file:
     for(unsigned i=0; i<20; i++){
@@ -31,10 +31,10 @@ int main(int argc, char **argv){
 
         // Save it:
         // mcap_wrapper::add_position("simple_image_position", current_timestamp, current_position);
-        mcap_wrapper::add_frame_transform("simple_image_position", current_timestamp, "root", "", current_position);
+        mcap_wrapper::add_frame_transform("simple_image_id", current_timestamp, "root", "simple_image_id", current_position);
         
         // Save image:
-        mcap_wrapper::write_image("simple_image", image_to_save, current_timestamp, "simple_image_id");
+        // mcap_wrapper::write_image("simple_image", image_to_save, current_timestamp, "");
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

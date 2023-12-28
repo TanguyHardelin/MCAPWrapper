@@ -77,28 +77,27 @@ namespace mcap_wrapper
 
     void add_frame_transform(std::string transform_name, uint64_t timestamp, std::string parent, std::string child, Eigen::Matrix4f pose)
     {
-        transform_name = "/tf/" + transform_name;
+        // transform_name = "/tf/" + transform_name;
         for (auto &kv : file_writers)
         {
             // Create schema
             nlohmann::json schema_unserialized = nlohmann::json::parse(frame_transform_schema);
             kv.second.create_schema(transform_name, schema_unserialized);
 
-            nlohmann::json frame_transforms;
-            frame_transforms["transforms"] = std::vector<nlohmann::json>();
-
             // Create transform object
             nlohmann::json frame_tranform;
             frame_tranform["timestamp"] = nlohmann::json();
             frame_tranform["timestamp"]["sec"] = (uint64_t)timestamp / (uint64_t)1e9;
             frame_tranform["timestamp"]["nsec"] = (uint64_t)timestamp % (uint64_t)1e9;
-            frame_tranform["parent_frame_id"] = parent;
+            if (parent.size() > 1)
+                frame_tranform["parent_frame_id"] = parent;
+            if (child.size() > 1)
+                frame_tranform["child_frame_id"] = child;
             nlohmann::json serialized_pose = Internal3DObject::pose_serializer(pose);
-            frame_tranform["translation"] = serialized_pose["translation"];
-            frame_tranform["rotation"] = serialized_pose["rotation"];
+            frame_tranform["translation"] = serialized_pose["position"];
+            frame_tranform["rotation"] = serialized_pose["orientation"];
 
-            frame_transforms["transforms"].push_back(frame_tranform);
-            write_JSON(transform_name, frame_transforms.dump(), timestamp);
+            write_JSON(transform_name, frame_tranform.dump(), timestamp);
         }
     }
 

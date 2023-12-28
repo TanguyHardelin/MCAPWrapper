@@ -374,7 +374,6 @@ namespace mcap_wrapper
         return true;
     }
 
-
     MCAPFileWriter &MCAPFileWriter::operator=(const MCAPFileWriter &object)
     {
         return *this;

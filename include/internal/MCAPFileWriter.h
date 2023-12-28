@@ -227,13 +227,13 @@ namespace mcap_wrapper
         bool write_3d_object(std::string object_name, uint64_t timestamp);
         /**
          * @brief Add position that could be vizualized into 3D. Position could be linked to frame thanks to the `frame_id` parameter.
-         * 
+         *
          * @param position_channel_name Name of position
          * @param timestamp Timestamp of pose
          * @param pose Pose in 3D space
          * @param frame_id Frame of reference for pose position and orientation
          * @return true  Everything does fines.
-         * @return false Everything does wrong. 
+         * @return false Everything does wrong.
          */
         bool add_position(std::string position_channel_name, uint64_t timestamp, Eigen::Matrix4f pose, std::string frame_id);
 
