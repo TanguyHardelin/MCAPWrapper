@@ -35,7 +35,7 @@ namespace mcap_wrapper
      * @return true could write image
      * @return false could not write image
      */
-    bool write_image(std::string identifier, cv::Mat image, uint64_t timestamp);
+    bool write_image(std::string identifier, cv::Mat image, uint64_t timestamp, std::string frame_id = "");
     /**
      * @brief Write JSON into MCAP. Each JSON data "type" must have a property called "__foxglove_name__" in order to be interpretable by
      * Foxglove studio as valid data. This function is thread safe.
@@ -49,7 +49,7 @@ namespace mcap_wrapper
     bool write_JSON(std::string identifier, std::string serialized_json, uint64_t timestamp);
     /**
      * @brief Add frame transform that could be used for 3D and image
-     * 
+     *
      * @param transform_name Name of the transform
      * @param timestamp Timestamp of transform
      * @param parent Name of the parent frame
@@ -211,20 +211,21 @@ namespace mcap_wrapper
     bool write_3d_object(std::string object_name, uint64_t timestamp);
 
     /**
-     * @brief Used by add_log. Specify the level of log
-     * 
+     * @brief Used by write_log. Specify the level of log
+     *
      */
-    enum class LOG_LEVEL{
-        UNKNOWN = 0, 
-        DEBUG = 1, 
+    enum class LOG_LEVEL
+    {
+        UNKNOWN = 0,
+        DEBUG = 1,
         INFO = 2,
         WARNING = 3,
         ERROR = 4,
         FATAL = 5
     };
     /**
-     * @brief Add log 
-     * 
+     * @brief Add log
+     *
      * @param log_channel_name Name of channel that must be used for pushing logs
      * @param timestamp Timestamp of log message
      * @param log_level Log level
@@ -233,8 +234,18 @@ namespace mcap_wrapper
      * @param file Filename
      * @param line Line number in the file
      */
-    void add_log(std::string log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string message, std::string name, std::string file, uint32_t line);
-
+    void write_log(std::string log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string message, std::string name, std::string file, uint32_t line);
+    /**
+     * @brief Add position that could be vizualized into 3D. Position could be linked to frame thanks to the `frame_id` parameter.
+     *
+     * @param position_channel_name Name of position
+     * @param timestamp Timestamp of pose
+     * @param pose Pose in 3D space
+     * @param frame_id Frame of reference for pose position and orientation
+     * @return true  Everything does fines.
+     * @return false Everything does wrong.
+     */
+    bool add_position(std::string position_channel_name, uint64_t timestamp, Eigen::Matrix4f pose, std::string frame_id = "");
 };
 
 #endif

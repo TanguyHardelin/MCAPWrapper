@@ -339,9 +339,44 @@ namespace mcap_wrapper
         return true;
     }
 
+    bool MCAPFileWriter::add_position(std::string position_channel_name, uint64_t timestamp, Eigen::Matrix4f pose, std::string frame_id){
+        // Add position into list of positions
+        if(!_all_positions.count(position_channel_name))
+            _all_positions[position_channel_name] = std::vector<Eigen::Matrix4f>();
+        _all_positions[position_channel_name].push_back(pose);
+
+        // Construct message
+        nlohmann::json pose_in_frame_json;
+        pose_in_frame_json["timestamp"] = nlohmann::json();
+        pose_in_frame_json["timestamp"]["sec"] = (uint64_t)timestamp / (uint64_t) 1e9;
+        pose_in_frame_json["timestamp"]["nsec"] = (uint64_t)timestamp % (uint64_t) 1e9;
+        pose_in_frame_json["frame_id"] = frame_id;
+        pose_in_frame_json["poses"] = std::vector<nlohmann::json>();
+        for(unsigned i=0; i<_all_positions[position_channel_name].size(); i++){
+            Eigen::Matrix4f position = _all_positions[position_channel_name][i];
+            nlohmann::json position_json;
+            position_json["translation"] = nlohmann::json();
+            position_json["translation"]["x"] = position(0, 3);
+            position_json["translation"]["y"] = position(1, 3);
+            position_json["translation"]["z"] = position(2, 3);
+            Eigen::Quaternionf orientation_eigen(position.block<3,3>(0,0));
+            position_json["orientation"] = nlohmann::json();
+            position_json["orientation"]["x"] = orientation_eigen.x();
+            position_json["orientation"]["y"] = orientation_eigen.y();
+            position_json["orientation"]["z"] = orientation_eigen.z();
+            position_json["orientation"]["w"] = orientation_eigen.w();
+            pose_in_frame_json["poses"].push_back(position_json);
+        }
+
+        // Write it to file
+        push_sample(position_channel_name, pose_in_frame_json, timestamp);
+
+        return true;
+    }
+
+
     MCAPFileWriter &MCAPFileWriter::operator=(const MCAPFileWriter &object)
     {
         return *this;
     }
-
 };

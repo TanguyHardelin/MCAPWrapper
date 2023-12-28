@@ -26,7 +26,7 @@ namespace mcap_wrapper
             file_writers[file_path].close();
     }
 
-    bool write_image(std::string identifier, cv::Mat image, uint64_t timestamp)
+    bool write_image(std::string identifier, cv::Mat image, uint64_t timestamp, std::string frame_id)
     {
         for (auto &kv : file_writers)
         {
@@ -41,7 +41,7 @@ namespace mcap_wrapper
             image_sample["timestamp"] = nlohmann::json();
             image_sample["timestamp"]["sec"] = timestamp / (uint64_t)1e9;
             image_sample["timestamp"]["nsec"] = timestamp % (uint64_t)1e9;
-            image_sample["frame_id"] = "";
+            image_sample["frame_id"] = frame_id;
             // Encode image in JPEG
             std::vector<int> compression_params;
             compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
@@ -52,10 +52,6 @@ namespace mcap_wrapper
             // Foxglove wait buffer data in base64 so we need to convert it
             image_sample["data"] = base64::to_base64(std::string(encoding_buffer.begin(), encoding_buffer.end()));
             image_sample["format"] = "jpeg";
-
-            std::ofstream sample_file("test.txt");
-            sample_file << base64::to_base64(std::string(encoding_buffer.begin(), encoding_buffer.end())) << std::endl;
-            sample_file.close();
 
             kv.second.push_sample(identifier, image_sample, timestamp);
         }
@@ -94,8 +90,8 @@ namespace mcap_wrapper
             // Create transform object
             nlohmann::json frame_tranform;
             frame_tranform["timestamp"] = nlohmann::json();
-            frame_tranform["timestamp"]["sec"] = (uint64_t)timestamp / (uint64_t) 1e9;
-            frame_tranform["timestamp"]["nsec"] = (uint64_t)timestamp % (uint64_t) 1e9;
+            frame_tranform["timestamp"]["sec"] = (uint64_t)timestamp / (uint64_t)1e9;
+            frame_tranform["timestamp"]["nsec"] = (uint64_t)timestamp % (uint64_t)1e9;
             frame_tranform["parent_frame_id"] = parent;
             nlohmann::json serialized_pose = Internal3DObject::pose_serializer(pose);
             frame_tranform["translation"] = serialized_pose["translation"];
@@ -246,11 +242,12 @@ namespace mcap_wrapper
         return out;
     }
 
-    void add_log(std::string log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string message, std::string name, std::string file, uint32_t line){
+    void write_log(std::string log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string message, std::string name, std::string file, uint32_t line)
+    {
         nlohmann::json log_json;
         log_json["timestamp"] = nlohmann::json();
-        log_json["timestamp"]["sec"] = (uint64_t) timestamp / (uint64_t) 1e9;
-        log_json["timestamp"]["nsec"] = (uint64_t) timestamp % (uint64_t) 1e9;
+        log_json["timestamp"]["sec"] = (uint64_t)timestamp / (uint64_t)1e9;
+        log_json["timestamp"]["nsec"] = (uint64_t)timestamp % (uint64_t)1e9;
         log_json["level"] = (int)log_level;
         log_json["message"] = message;
         log_json["name"] = name;
@@ -268,6 +265,22 @@ namespace mcap_wrapper
 
             kv.second.push_sample(log_channel_name, log_json, timestamp);
         }
-        
+    }
+
+    bool add_position(std::string position_channel_name, uint64_t timestamp, Eigen::Matrix4f pose, std::string frame_id)
+    {
+        bool out = true;
+        for (auto &kv : file_writers)
+        {
+            // Create schema if not present:
+            if (!kv.second.is_schema_present(position_channel_name))
+            {
+                nlohmann::json schema_unserialized = nlohmann::json::parse(poses_in_frame_schema);
+                kv.second.create_schema(position_channel_name, schema_unserialized);
+            }
+
+            out &= kv.second.add_position(position_channel_name, timestamp, pose, frame_id);
+        }
+        return out;
     }
 };

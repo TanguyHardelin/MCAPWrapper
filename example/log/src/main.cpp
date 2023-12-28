@@ -23,7 +23,7 @@ int main(int argc, char **argv){
         if(i == 5)
             current_log_level = mcap_wrapper::LOG_LEVEL::WARNING;
         
-        mcap_wrapper::add_log("logs", std::chrono::system_clock::now().time_since_epoch().count(), current_log_level, "This is a log message", "LOG", "example/log/src/main.cpp", 26);
+        mcap_wrapper::write_log("logs", std::chrono::system_clock::now().time_since_epoch().count(), current_log_level, "This is a log message", "LOG", "example/log/src/main.cpp", 26);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

@@ -225,6 +225,17 @@ namespace mcap_wrapper
          * @return false Everything does wrong.
          */
         bool write_3d_object(std::string object_name, uint64_t timestamp);
+        /**
+         * @brief Add position that could be vizualized into 3D. Position could be linked to frame thanks to the `frame_id` parameter.
+         * 
+         * @param position_channel_name Name of position
+         * @param timestamp Timestamp of pose
+         * @param pose Pose in 3D space
+         * @param frame_id Frame of reference for pose position and orientation
+         * @return true  Everything does fines.
+         * @return false Everything does wrong. 
+         */
+        bool add_position(std::string position_channel_name, uint64_t timestamp, Eigen::Matrix4f pose, std::string frame_id);
 
         // Deffine operator= for std::mutex and std::conditionnal variable
         MCAPFileWriter &operator=(const MCAPFileWriter &object);
@@ -235,16 +246,17 @@ namespace mcap_wrapper
         void run(); // Function used for storing data into file
 
         // Attributes:
-        mcap::McapWriter _file_writer;                          // File writer object
-        std::mutex _file_writer_mtx;                            // Mutex of `_file_writer`
-        std::map<std::string, mcap::Channel> _all_channels;     // All channels schema
-        std::queue<mcap::Message> _data_queue;                  // Data FIFO (used by write thread to get data)
-        std::mutex _data_queue_mtx;                             // Mutex of `_data_queue`
-        std::thread *_writing_thread;                           // Writing thread
-        bool _continue_writing;                                 // Variable used for indicating to the writing thread if write must continue;
-        std::condition_variable _write_notifier;                // Used for signaling new data to write for writing thread
-        std::map<std::string, std::string> _defined_schema;     // Is usefull for keeping trace of defined schema
-        std::map<std::string, Internal3DObject> _all_3d_object; // Definition of all 3D objects.
+        mcap::McapWriter _file_writer;                                      // File writer object
+        std::mutex _file_writer_mtx;                                        // Mutex of `_file_writer`
+        std::map<std::string, mcap::Channel> _all_channels;                 // All channels schema
+        std::queue<mcap::Message> _data_queue;                              // Data FIFO (used by write thread to get data)
+        std::mutex _data_queue_mtx;                                         // Mutex of `_data_queue`
+        std::thread *_writing_thread;                                       // Writing thread
+        bool _continue_writing;                                             // Variable used for indicating to the writing thread if write must continue;
+        std::condition_variable _write_notifier;                            // Used for signaling new data to write for writing thread
+        std::map<std::string, std::string> _defined_schema;                 // Is usefull for keeping trace of defined schema
+        std::map<std::string, Internal3DObject> _all_3d_object;             // Definition of all 3D objects.
+        std::map<std::string, std::vector<Eigen::Matrix4f>> _all_positions; // Keep track of all positions for a dedicated channel
     };
 
 };
