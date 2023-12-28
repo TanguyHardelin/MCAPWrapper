@@ -34,7 +34,6 @@ namespace mcap_wrapper
                     mcap::SchemaId channel_shema_id = channel_ptr->schemaId;
                     mcap::SchemaPtr corresponding_schema = _file_reader.schema(channel_shema_id);
                     std::string schema_name = corresponding_schema->name;
-                    std::cout << "Read channel " << channel_name << " with name " << schema_name << " from file" << std::endl;
                     // Parse type from schema name
                     MCAPReaderChannelType corresponding_type = MCAPReaderChannelType::RAW_JSON;
                     if (schema_name == "foxglove.CompressedImage")
@@ -111,6 +110,13 @@ namespace mcap_wrapper
         // Read message:
         std::string message(reinterpret_cast<const char *>((*_channel_iterator[channel_name])->message.data),
                                   (*_channel_iterator[channel_name])->message.dataSize);
+        // Parse it:
+        nlohmann::json parsed_message = nlohmann::json::parse(message);
+        if(!parsed_message.count("data"))
+            return false; // No image present for this data
+
+        std::vector<uchar> encoded_buffer = base64::decode_into<std::vector<uchar>>(parsed_message["data"].get<std::string>());
+        out_image = cv::imdecode(encoded_buffer, cv::IMREAD_UNCHANGED);
 
         // Increment iterators:
         (*_channel_iterator[channel_name])++;

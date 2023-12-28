@@ -6,6 +6,7 @@
 #include <map>
 #include <iostream>
 #include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include "internal/Base64.hpp"
 #include "internal/json.hpp"
 #include "mcap/reader.hpp"
