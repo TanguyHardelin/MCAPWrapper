@@ -34,7 +34,7 @@ int main(int argc, char **argv){
         mcap_wrapper::add_frame_transform("simple_image_id", current_timestamp, "root", "simple_image_id", current_position);
         
         // Save image:
-        // mcap_wrapper::write_image("simple_image", image_to_save, current_timestamp, "");
+        mcap_wrapper::write_image("simple_image", image_to_save, current_timestamp, "simple_image_id");
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
