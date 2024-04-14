@@ -1,10 +1,7 @@
 # MCAPWrapper
-This project aim to provide a simple wrapper for using MCAP both in live and playback. 
-[MCAP description]
-[Foxglove studio link]
+According to [foxglove](https://foxglove.dev) MCAP is a standardized container format for storing heterogeneous robotics data. It allow unified data format for recording robotics data and allow futher debug. By combining it with [foxglove-studio](https://foxglove.dev/download) it provide a powerfull tool for visualize and debug robotics projects.
 
-
-All functions are thread safe.
+This project aim to provide a wrapper for writing MCAP in a simplified way. With this project it should be possible to write MCAP and use foxglove in minutes instead of hours.
 
 ## Build and install 
 ```bash
