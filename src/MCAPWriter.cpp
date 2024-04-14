@@ -76,25 +76,7 @@ namespace mcap_wrapper
             {
                 nlohmann::json schema_unserialized = nlohmann::json::parse(compressed_image_schema);
                 file_writers[connexion_identifier].create_schema(identifier, schema_unserialized);
-            }
-
-            // Camera calibration infos
-            // TODO: place it in function
-            nlohmann::json camera_calibration_foxglove_schema = nlohmann::json::parse(camera_calibration_schema);
-            file_writers[connexion_identifier].create_schema("CameraInfo", camera_calibration_foxglove_schema);
-            nlohmann::json camera_calibration;
-            camera_calibration["timestamp"] = nlohmann::json();
-            camera_calibration["timestamp"]["sec"] = (uint64_t)timestamp / (uint64_t)1e9;
-            camera_calibration["timestamp"]["nsec"] = (uint64_t)timestamp % (uint64_t)1e9;
-            camera_calibration["frame_id"] = frame_id;
-            camera_calibration["width"] = image.rows;
-            camera_calibration["height"] = image.cols;
-            camera_calibration["distortion_model"] = "rational_polynomial";
-            camera_calibration["D"] = std::vector<float>({0, 0, 0, 0});
-            camera_calibration["K"] = std::vector<float>({100, 0, 0, 0, 100, 0, 0, 0, 1});
-            camera_calibration["R"] = std::vector<float>({1, 0, 0, 0, 1, 0, 0, 0, 1});
-            camera_calibration["P"] = std::vector<float>({100, 0, 0, 0, 0, 100, 0, 0, 0, 0, 1, 0});
-            write_JSON_to_all("CameraInfo", camera_calibration.dump(), timestamp);
+            }            
 
             nlohmann::json image_sample;
             image_sample["timestamp"] = nlohmann::json();
@@ -121,6 +103,90 @@ namespace mcap_wrapper
         //////////////////
         // TODO: implement it !
 
+        return true;
+    }
+
+    bool write_camera_calibration_all(std::string camera_identifier,
+                                     uint64_t timestamp,
+                                     std::string frame_id,
+                                     unsigned image_width,
+                                     unsigned image_height,
+                                     std::string distortion_model,
+                                     std::array<double, 5> D,
+                                     std::array<double, 9> K,
+                                     std::array<double, 9> R,
+                                     std::array<double, 12> P)
+    {
+        bool out = true;
+        for(auto & kv:file_writers){
+            write_camera_calibration_to(kv.first, camera_identifier, timestamp, frame_id, image_width, image_height, distortion_model, D, K, R, P);
+        }
+        return out;
+    }
+
+    bool write_camera_calibration_to(std::vector<std::string> connexion_identifier,
+                                     std::string camera_identifier,
+                                     uint64_t timestamp,
+                                     std::string frame_id,
+                                     unsigned image_width,
+                                     unsigned image_height,
+                                     std::string distortion_model,
+                                     std::array<double, 5> D,
+                                     std::array<double, 9> K,
+                                     std::array<double, 9> R,
+                                     std::array<double, 12> P)
+    {
+        bool out = true;
+        for(auto id:connexion_identifier){
+            write_camera_calibration_to(id, camera_identifier, timestamp, frame_id, image_width, image_height, distortion_model, D, K, R, P);
+        }
+        return out;
+    }
+
+    bool write_camera_calibration_to(std::string connexion_identifier,
+                                     std::string camera_identifier,
+                                     uint64_t timestamp,
+                                     std::string frame_id,
+                                     unsigned image_width,
+                                     unsigned image_height,
+                                     std::string distortion_model,
+                                     std::array<double, 5> D,
+                                     std::array<double, 9> K,
+                                     std::array<double, 9> R,
+                                     std::array<double, 12> P)
+    {
+        unsigned number_of_connexion_presents = get_number_of_connexion_presents_for_identifier(connexion_identifier);
+        if (number_of_connexion_presents == 0)
+            return false;
+
+        ////////////////////
+        //
+        //  File connexion
+        //
+        //////////////////
+        if (is_file_identifier(connexion_identifier))
+        {
+            // Create schema if not present:
+            if (!file_writers[connexion_identifier].is_schema_present(camera_identifier))
+            {
+                nlohmann::json camera_calibration_foxglove_schema = nlohmann::json::parse(camera_calibration_schema);
+                file_writers[connexion_identifier].create_schema(camera_identifier, camera_calibration_foxglove_schema); 
+            }
+
+            nlohmann::json camera_calibration;
+            camera_calibration["timestamp"] = nlohmann::json();
+            camera_calibration["timestamp"]["sec"] = (uint64_t)timestamp / (uint64_t)1e9;
+            camera_calibration["timestamp"]["nsec"] = (uint64_t)timestamp % (uint64_t)1e9;
+            camera_calibration["frame_id"] = frame_id;
+            camera_calibration["width"] = image_width;
+            camera_calibration["height"] = image_height;
+            camera_calibration["distortion_model"] = distortion_model;
+            camera_calibration["D"] = D;
+            camera_calibration["K"] = K;
+            camera_calibration["R"] = R;
+            camera_calibration["P"] = P;
+            file_writers[connexion_identifier].push_sample(camera_identifier, camera_calibration, timestamp);
+        }
         return true;
     }
 

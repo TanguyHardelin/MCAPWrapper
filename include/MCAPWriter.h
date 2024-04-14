@@ -62,6 +62,89 @@ namespace mcap_wrapper
     bool write_image_to(std::string connexion_identifier, std::string identifier, cv::Mat image, uint64_t timestamp, std::string frame_id = "");
 
     /**
+     * @brief Write camera calibration. It is usefull for plotting image in 3D view and debug stereo programs.
+     * 
+     * @param camera_identifier channel name used in MCAP for this data
+     * @param timestamp Timestamp of calibration data
+     * @param frame_id Frame of reference for the camera. The origin of the frame is the optical center of the camera. +x points to the right in the image, +y points down, and +z points into the plane of the image.
+     * @param image_width Image width
+     * @param image_height Image height
+     * @param distortion_model Name of distortion model. Supported values: `plumb_bob` and `rational_polynomial`
+     * @param D Distortion parameters
+     * @param K Intrinsic camera matrix (3x3 row-major matrix)
+     * @param R Rectification matrix (stereo cameras only, 3x3 row-major matrix)
+     * @param P Projection/camera matrix (3x4 row-major matrix)
+     * @return true could write calibration
+     * @return false could not write calibration
+     */
+    bool write_camera_calibration_all(std::string camera_identifier,
+                                     uint64_t timestamp,
+                                     std::string frame_id,
+                                     unsigned image_width,
+                                     unsigned image_height,
+                                     std::string distortion_model,
+                                     std::array<double, 5> D,
+                                     std::array<double, 9> K,
+                                     std::array<double, 9> R,
+                                     std::array<double, 12> P);
+    /**
+     * @brief Write camera calibration. It is usefull for plotting image in 3D view and debug stereo programs.
+     * 
+     * @param connexion_identifier list of connexion names where data must be write.
+     * @param camera_identifier channel name used in MCAP for this data
+     * @param timestamp Timestamp of calibration data
+     * @param frame_id Frame of reference for the camera. The origin of the frame is the optical center of the camera. +x points to the right in the image, +y points down, and +z points into the plane of the image.
+     * @param image_width Image width
+     * @param image_height Image height
+     * @param distortion_model Name of distortion model. Supported values: `plumb_bob` and `rational_polynomial`
+     * @param D Distortion parameters
+     * @param K Intrinsic camera matrix (3x3 row-major matrix)
+     * @param R Rectification matrix (stereo cameras only, 3x3 row-major matrix)
+     * @param P Projection/camera matrix (3x4 row-major matrix)
+     * @return true could write calibration
+     * @return false could not write calibration
+     */
+    bool write_camera_calibration_to(std::vector<std::string> connexion_identifier,
+                                     std::string camera_identifier,
+                                     uint64_t timestamp,
+                                     std::string frame_id,
+                                     unsigned image_width,
+                                     unsigned image_height,
+                                     std::string distortion_model,
+                                     std::array<double, 5> D,
+                                     std::array<double, 9> K,
+                                     std::array<double, 9> R,
+                                     std::array<double, 12> P);
+    /**
+     * @brief Write camera calibration. It is usefull for plotting image in 3D view and debug stereo programs.
+     * 
+     * @param connexion_identifier connexion name where data must be write.
+     * @param camera_identifier channel name used in MCAP for this data
+     * @param timestamp Timestamp of calibration data
+     * @param frame_id Frame of reference for the camera. The origin of the frame is the optical center of the camera. +x points to the right in the image, +y points down, and +z points into the plane of the image.
+     * @param image_width Image width
+     * @param image_height Image height
+     * @param distortion_model Name of distortion model. Supported values: `plumb_bob` and `rational_polynomial`
+     * @param D Distortion parameters
+     * @param K Intrinsic camera matrix (3x3 row-major matrix)
+     * @param R Rectification matrix (stereo cameras only, 3x3 row-major matrix)
+     * @param P Projection/camera matrix (3x4 row-major matrix)
+     * @return true could write calibration
+     * @return false could not write calibration
+     */
+    bool write_camera_calibration_to(std::string connexion_identifier,
+                                     std::string camera_identifier,
+                                     uint64_t timestamp,
+                                     std::string frame_id,
+                                     unsigned image_width,
+                                     unsigned image_height,
+                                     std::string distortion_model,
+                                     std::array<double, 5> D,
+                                     std::array<double, 9> K,
+                                     std::array<double, 9> R,
+                                     std::array<double, 12> P);
+
+    /**
      * @brief Write JSON into MCAP. Each JSON data "type" must have a property called "__foxglove_name__" in order to be interpretable by
      * Foxglove studio as valid data. This function is thread safe.
      *

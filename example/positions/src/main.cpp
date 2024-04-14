@@ -6,7 +6,8 @@
 #include <opencv2/highgui.hpp>
 #include "MCAPWriter.h"
 
-int main(int argc, char **argv){
+int main(int argc, char **argv)
+{
     // Open MCAP writer:
     mcap_wrapper::open_file_connexion("simple.mcap");
 
@@ -18,21 +19,29 @@ int main(int argc, char **argv){
     // Current position:
     Eigen::Matrix4f current_position = Eigen::Matrix4f::Identity();
 
-    // Add transform:
-    mcap_wrapper::add_frame_transform_to_all("root", std::chrono::system_clock::now().time_since_epoch().count(), "map", "root", Eigen::Matrix4f::Identity());
+    // Camera calibration:
+    mcap_wrapper::write_camera_calibration_all("simpleCamera",
+                                               std::chrono::system_clock::now().time_since_epoch().count(), 
+                                               "simple_image_tttt",
+                                               image.cols, image.rows, "rational_polynomial", 
+                                               {0, 0, 0, 0, 0}, {100, 0, 0, 0, 100, 0, 0, 0, 1}, {1, 0, 0, 1, 0, 0, 0, 1}, {100, 0, 0, 0, 0, 100, 0, 0, 0, 0, 1, 0});
+
+        // Add transform:
+        mcap_wrapper::add_frame_transform_to_all("root", std::chrono::system_clock::now().time_since_epoch().count(), "map", "root", Eigen::Matrix4f::Identity());
 
     // Write data into file:
-    for(unsigned i=0; i<20; i++){
+    for (unsigned i = 0; i < 20; i++)
+    {
         cv::Mat image_to_save = image.clone();
         uint64_t current_timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
         // Update current position:
-        current_position(0,3) += 1;
+        current_position(0, 3) += 1;
 
         // Save it:
         // mcap_wrapper::add_position_to_all("simple_image_position", current_timestamp, current_position);
         mcap_wrapper::add_frame_transform_to_all("simple_image_id", current_timestamp, "root", "simple_image_tttt", current_position);
-        
+
         // Save image:
         mcap_wrapper::write_image_to_all("simple_image", image_to_save, current_timestamp, "simple_image_tttt");
 
