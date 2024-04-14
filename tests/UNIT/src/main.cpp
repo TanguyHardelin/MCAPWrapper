@@ -11,7 +11,7 @@ double calculatePSNR(const cv::Mat& I1, const cv::Mat& I2);
 int main(int argc, char **argv)
 {
     // Create MCAP file:
-    mcap_wrapper::open_file("test.mcap");
+    mcap_wrapper::open_file_connexion("test.mcap");
 
     // Open reference image:
     std::string reference_image_path = RESSOURCE_PATH; // `RESSOURCE_PATH` is defined in cmake
@@ -32,24 +32,24 @@ int main(int argc, char **argv)
         nlohmann::json sample_json;
         sample_json["random_value"] = rand()%1024;
         sample_json["fixed_value"] = "This is a fixed value";
-        mcap_wrapper::write_JSON("sample_json", sample_json.dump(), current_timestamp);
+        mcap_wrapper::write_JSON_to_all("sample_json", sample_json.dump(), current_timestamp);
         pushed_json_values.push_back(sample_json);
         // Image:
         cv::Mat sample_image = reference_image.clone();
         int kernel_size = std::max(3, rand()%7);
         cv::blur(sample_image, sample_image, cv::Size(kernel_size, kernel_size));
-        mcap_wrapper::write_image("sample_image", sample_image, current_timestamp);
+        mcap_wrapper::write_image_to_all("sample_image", sample_image, current_timestamp);
         pushed_images.push_back(sample_image);
         // Log:
         mcap_wrapper::LOG_LEVEL log_level = mcap_wrapper::LOG_LEVEL(rand()%6);
         std::string log = "This is a log: #" + std::to_string(i);
-        mcap_wrapper::write_log("sample_log", current_timestamp, log_level, log, "LOG", "tests/UNIT/src/main.cpp", 42);
+        mcap_wrapper::write_log_to_all("sample_log", current_timestamp, log_level, log, "LOG", "tests/UNIT/src/main.cpp", 42);
         pushed_logs.push_back(log);
         // Little sleep
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
-    mcap_wrapper::close_file("test.mcap");
+    mcap_wrapper::close_file_connexion("test.mcap");
 
     // Read it:
     mcap_wrapper::MCAPReader reader("test.mcap");

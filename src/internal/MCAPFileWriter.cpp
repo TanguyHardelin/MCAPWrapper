@@ -315,7 +315,7 @@ namespace mcap_wrapper
         return _all_3d_object[object_name].add_text(pose, billboard, font_size, scale_invariant, color, text);
     }
     
-    bool MCAPFileWriter::write_3d_object(std::string object_name, uint64_t timestamp)
+    bool MCAPFileWriter::write_3d_object_to_all(std::string object_name, uint64_t timestamp)
     {
         if(_all_3d_object.count(object_name) == 0)
             return false;
@@ -339,7 +339,7 @@ namespace mcap_wrapper
         return true;
     }
 
-    bool MCAPFileWriter::add_position(std::string position_channel_name, uint64_t timestamp, Eigen::Matrix4f pose, std::string frame_id){
+    bool MCAPFileWriter::add_position_to_all(std::string position_channel_name, uint64_t timestamp, Eigen::Matrix4f pose, std::string frame_id){
         // Add position into list of positions
         if(!_all_positions.count(position_channel_name))
             _all_positions[position_channel_name] = std::vector<Eigen::Matrix4f>();

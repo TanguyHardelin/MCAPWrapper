@@ -224,7 +224,7 @@ namespace mcap_wrapper
          * @return true Everything does fines.
          * @return false Everything does wrong.
          */
-        bool write_3d_object(std::string object_name, uint64_t timestamp);
+        bool write_3d_object_to_all(std::string object_name, uint64_t timestamp);
         /**
          * @brief Add position that could be vizualized into 3D. Position could be linked to frame thanks to the `frame_id` parameter.
          *
@@ -235,7 +235,7 @@ namespace mcap_wrapper
          * @return true  Everything does fines.
          * @return false Everything does wrong.
          */
-        bool add_position(std::string position_channel_name, uint64_t timestamp, Eigen::Matrix4f pose, std::string frame_id);
+        bool add_position_to_all(std::string position_channel_name, uint64_t timestamp, Eigen::Matrix4f pose, std::string frame_id);
 
         // Deffine operator= for std::mutex and std::conditionnal variable
         MCAPFileWriter &operator=(const MCAPFileWriter &object);
