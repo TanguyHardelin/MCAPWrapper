@@ -10,6 +10,7 @@ int main(int argc, char **argv)
 {
     // Open MCAP writer:
     mcap_wrapper::open_file_connexion("simple.mcap");
+    mcap_wrapper::open_network_connexion("0.0.0.0",8765,"simple_server");
 
     // Open cv::Mat image
     std::string image_path = RESSOURCE_PATH; // `RESSOURCE_PATH` is defined in cmake
@@ -30,13 +31,20 @@ int main(int argc, char **argv)
         mcap_wrapper::add_frame_transform_to_all("root", std::chrono::system_clock::now().time_since_epoch().count(), "map", "root", Eigen::Matrix4f::Identity());
 
     // Write data into file:
-    for (unsigned i = 0; i < 20; i++)
+    for (unsigned i = 0; ; i++)
     {
+        // TODO write it only in network
+        mcap_wrapper::write_camera_calibration_all("simpleCamera",
+                                               std::chrono::system_clock::now().time_since_epoch().count(), 
+                                               "simple_image_tttt",
+                                               image.cols, image.rows, "rational_polynomial", 
+                                               {0, 0, 0, 0, 0}, {100, 0, 0, 0, 100, 0, 0, 0, 1}, {1, 0, 0, 1, 0, 0, 0, 1}, {100, 0, 0, 0, 0, 100, 0, 0, 0, 0, 1, 0});
+
         cv::Mat image_to_save = image.clone();
         uint64_t current_timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
         // Update current position:
-        current_position(0, 3) += 1;
+        current_position(0, 3) = i % 20;
 
         // Save it:
         // mcap_wrapper::add_position_to_all("simple_image_position", current_timestamp, current_position);
@@ -45,7 +53,7 @@ int main(int argc, char **argv)
         // Save image:
         mcap_wrapper::write_image_to_all("simple_image", image_to_save, current_timestamp, "simple_image_tttt");
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     // Close file
     mcap_wrapper::close_file_connexion("simple.mcap");

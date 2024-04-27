@@ -8,7 +8,6 @@ namespace mcap_wrapper
     MCAPWebSocketWriter::~MCAPWebSocketWriter()
     {
         close();
-        delete _writing_thread;
     }
 
     bool MCAPWebSocketWriter::open(std::string url, unsigned port, std::string server_name, foxglove::ServerOptions server_options)
@@ -54,6 +53,7 @@ namespace mcap_wrapper
             is_server_open = false;
             _continue_writing = false;
             _writing_thread->join();
+            delete _writing_thread;
         }
         return true;
     }
@@ -98,7 +98,7 @@ namespace mcap_wrapper
             schema_title = schema["title"];
 
         foxglove::ChannelWithoutId channel;
-        channel.topic = schema_title;
+        channel.topic = channel_name;
         channel.encoding = "json";
         channel.schemaName = schema_title;
         channel.schema = schema.dump();

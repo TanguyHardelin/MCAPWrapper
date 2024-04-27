@@ -17,17 +17,38 @@ namespace mcap_wrapper
      */
     bool open_file_connexion(std::string file_path, std::string reference_name = "");
     /**
+     * @brief Create a network connexion that could be used with foxglove studio.
+     * 
+     * @param url url where server should be
+     * @param port port where server should start
+     * @param reference_name name refered to connection for future usage.
+     * @param server_name name of server. Will be displayed into foxglove-studio
+     * @return true could create server
+     * @return false could not create server
+     */
+    bool open_network_connexion(std::string url, unsigned port, std::string reference_name, std::string server_name="MCAP wrapper");
+    /**
      * @brief Close file corresponding to the `file_path`
      *
-     * @param file_path path to the file to close
+     * @param reference_name path or reference to the file to close
      */
     void close_file_connexion(std::string reference_name);
+    /**
+     * @brief Close network corresponding to `reference_name`
+     * 
+     * @param reference_name server reference name
+     */
+    void close_network_connexion(std::string reference_name);
     /**
      * @brief Close all files opened
      *
      */
     void close_all_files();
-
+    /**
+     * @brief Close all network connexion opened
+     * 
+     */
+    void close_all_network();
     /**
      * @brief Write image into all MCAP connexion. Connexion can be files or live foxglove-studio.
      *

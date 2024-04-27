@@ -10,7 +10,6 @@ namespace mcap_wrapper
     MCAPFileWriter::~MCAPFileWriter()
     {
         close();
-        delete _writing_thread;
     }
 
     bool MCAPFileWriter::close()
@@ -21,6 +20,7 @@ namespace mcap_wrapper
             _write_notifier.notify_all();
             _writing_thread->join();
             _file_writer.close();
+            delete _writing_thread;
         }
         return true;
     }

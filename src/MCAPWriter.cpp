@@ -1,5 +1,6 @@
 #include "MCAPWriter.h"
 #include "internal/MCAPFileWriter.h"
+#include "internal/MCAPWebSocketWriter.h"
 #include "internal/FoxgloveSchema.hpp"
 #include "internal/Base64.hpp"
 
@@ -11,6 +12,7 @@ namespace mcap_wrapper
 {
     // Each file stream is stored into dictionnary for being called later.
     std::map<std::string, MCAPFileWriter> file_writers;
+    std::map<std::string, MCAPWebSocketWriter> websocket_writers;
 
     bool open_file_connexion(std::string file_path, std::string open_file_connexion)
     {
@@ -22,18 +24,41 @@ namespace mcap_wrapper
         return false;
     }
 
+    bool open_network_connexion(std::string url, unsigned port, std::string reference_name, std::string server_name){
+        if(reference_name == "")
+            return false;
+        websocket_writers[reference_name] = MCAPWebSocketWriter();
+        foxglove::ServerOptions server_options;
+        websocket_writers[reference_name].open(url, port, server_name, server_options);
+        return true;
+    }
+
     void close_file_connexion(std::string reference_name)
     {
         if (file_writers.count(reference_name))
             file_writers[reference_name].close();
     }
 
+    void close_all_files(){
+        for(auto & kv: file_writers)
+            kv.second.close();
+    }
+
+    void close_all_network(){
+        for(auto & kv: websocket_writers)
+            kv.second.close();
+    }
+
+    void close_network_connexion(std::string reference_name){
+        if (websocket_writers.count(reference_name))
+            websocket_writers[reference_name].close();
+    }
+
     unsigned get_number_of_connexion_presents_for_identifier(std::string identifier)
     {
         unsigned number_of_connexion_presents = 0;
         number_of_connexion_presents += file_writers.count(identifier);
-
-        // TODO: Add network
+        number_of_connexion_presents += websocket_writers.count(identifier);
         return number_of_connexion_presents;
     }
 
@@ -42,10 +67,17 @@ namespace mcap_wrapper
         return file_writers.count(connexion_identifier) > 0;
     }
 
+    bool is_network_identifier(std::string connexion_identifier)
+    {
+        return websocket_writers.count(connexion_identifier) > 0;
+    }
+
     bool write_image_to_all(std::string identifier, cv::Mat image, uint64_t timestamp, std::string frame_id)
     {
         bool out = true;
         for (auto &kv : file_writers)
+            out &= write_image_to(kv.first, identifier, image, timestamp, frame_id);
+        for (auto &kv : websocket_writers)
             out &= write_image_to(kv.first, identifier, image, timestamp, frame_id);
         return out;
     }
@@ -101,7 +133,32 @@ namespace mcap_wrapper
         //  Network connexion
         //
         //////////////////
-        // TODO: implement it !
+        if(is_network_identifier(connexion_identifier)){
+            // Create schema if not present:
+            if (!websocket_writers[connexion_identifier].is_schema_present(identifier))
+            {
+                nlohmann::json schema_unserialized = nlohmann::json::parse(compressed_image_schema);
+                websocket_writers[connexion_identifier].create_schema(identifier, schema_unserialized);
+            }            
+
+            nlohmann::json image_sample;
+            image_sample["timestamp"] = nlohmann::json();
+            image_sample["timestamp"]["sec"] = timestamp / (uint64_t)1e9;
+            image_sample["timestamp"]["nsec"] = timestamp % (uint64_t)1e9;
+            image_sample["frame_id"] = frame_id;
+            // Encode image in JPEG
+            std::vector<int> compression_params;
+            compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+            compression_params.push_back(95); // Adjust the quality (0-100), higher is better quality
+
+            std::vector<uchar> encoding_buffer;
+            cv::imencode(".jpg", image, encoding_buffer, compression_params);
+            // Foxglove wait buffer data in base64 so we need to convert it
+            image_sample["data"] = base64::to_base64(std::string(encoding_buffer.begin(), encoding_buffer.end()));
+            image_sample["format"] = "jpeg";
+
+            websocket_writers[connexion_identifier].push_sample(identifier, image_sample, timestamp);
+        }
 
         return true;
     }
@@ -119,6 +176,9 @@ namespace mcap_wrapper
     {
         bool out = true;
         for(auto & kv:file_writers){
+            write_camera_calibration_to(kv.first, camera_identifier, timestamp, frame_id, image_width, image_height, distortion_model, D, K, R, P);
+        }
+        for(auto & kv:websocket_writers){
             write_camera_calibration_to(kv.first, camera_identifier, timestamp, frame_id, image_width, image_height, distortion_model, D, K, R, P);
         }
         return out;
@@ -187,6 +247,34 @@ namespace mcap_wrapper
             camera_calibration["P"] = P;
             file_writers[connexion_identifier].push_sample(camera_identifier, camera_calibration, timestamp);
         }
+        ////////////////////
+        //
+        //  Network connexion
+        //
+        //////////////////
+        if(is_network_identifier(connexion_identifier)){
+            // Create schema if not present:
+            if (!websocket_writers[connexion_identifier].is_schema_present(camera_identifier))
+            {
+                nlohmann::json camera_calibration_foxglove_schema = nlohmann::json::parse(camera_calibration_schema);
+                websocket_writers[connexion_identifier].create_schema(camera_identifier, camera_calibration_foxglove_schema); 
+            }
+
+            nlohmann::json camera_calibration;
+            camera_calibration["timestamp"] = nlohmann::json();
+            camera_calibration["timestamp"]["sec"] = (uint64_t)timestamp / (uint64_t)1e9;
+            camera_calibration["timestamp"]["nsec"] = (uint64_t)timestamp % (uint64_t)1e9;
+            camera_calibration["frame_id"] = frame_id;
+            camera_calibration["width"] = image_width;
+            camera_calibration["height"] = image_height;
+            camera_calibration["distortion_model"] = distortion_model;
+            camera_calibration["D"] = D;
+            camera_calibration["K"] = K;
+            camera_calibration["R"] = R;
+            camera_calibration["P"] = P;
+            websocket_writers[connexion_identifier].push_sample(camera_identifier, camera_calibration, timestamp);
+        }
+
         return true;
     }
 
@@ -194,6 +282,8 @@ namespace mcap_wrapper
     {
         bool out = true;
         for (auto &kv : file_writers)
+            out &= write_JSON_to(kv.first, identifier, serialized_json, timestamp);
+        for (auto &kv : websocket_writers)
             out &= write_JSON_to(kv.first, identifier, serialized_json, timestamp);
         return out;
     }
@@ -237,7 +327,9 @@ namespace mcap_wrapper
         //  Network connexion
         //
         //////////////////
-        // TODO: implement it !
+        if(is_network_identifier(connexion_identifier)){
+            websocket_writers[connexion_identifier].push_sample(identifier, unserialiazed_json, timestamp);
+        }
 
         return true;
     }
@@ -246,6 +338,8 @@ namespace mcap_wrapper
     {
         bool out = true;
         for (auto &kv : file_writers)
+            out &= add_frame_transform_to(kv.first, transform_name, timestamp, parent, child, pose);
+        for (auto &kv : websocket_writers)
             out &= add_frame_transform_to(kv.first, transform_name, timestamp, parent, child, pose);
         return out;
     }
@@ -298,8 +392,30 @@ namespace mcap_wrapper
         //  Network connexion
         //
         //////////////////
-        // TODO: implement it !
+        if(is_network_identifier(connexion_identifier)){
+            // Create schema if not present:
+            if (!websocket_writers[connexion_identifier].is_schema_present(transform_name))
+            {
+                nlohmann::json schema_unserialized = nlohmann::json::parse(frame_transform_schema);
+                websocket_writers[connexion_identifier].create_schema(transform_name, schema_unserialized);
+            }
 
+            // Create transform object
+            nlohmann::json frame_tranform;
+            frame_tranform["timestamp"] = nlohmann::json();
+            frame_tranform["timestamp"]["sec"] = (uint64_t)timestamp / (uint64_t)1e9;
+            frame_tranform["timestamp"]["nsec"] = (uint64_t)timestamp % (uint64_t)1e9;
+            if (parent.size() > 1)
+                frame_tranform["parent_frame_id"] = parent;
+            if (child.size() > 1)
+                frame_tranform["child_frame_id"] = child;
+            nlohmann::json serialized_pose = Internal3DObject::pose_serializer(pose);
+            frame_tranform["translation"] = serialized_pose["position"];
+            frame_tranform["rotation"] = serialized_pose["orientation"];
+
+            write_JSON_to(connexion_identifier, transform_name, frame_tranform.dump(), timestamp);
+        }
+            
         return true;
     }
 
@@ -309,12 +425,20 @@ namespace mcap_wrapper
         {
             kv.second.create_3D_object(object_name, frame_id, frame_locked);
         }
+        for (auto &kv : websocket_writers)
+        {
+            kv.second.create_3D_object(object_name, frame_id, frame_locked);
+        }
     }
 
     bool add_metadata_to_3d_object(std::string object_name, std::pair<std::string, std::string> metadata)
     {
         bool out = true;
         for (auto &kv : file_writers)
+        {
+            out &= kv.second.add_metadata_to_3d_object(object_name, metadata);
+        }
+        for (auto &kv : websocket_writers)
         {
             out &= kv.second.add_metadata_to_3d_object(object_name, metadata);
         }
@@ -334,6 +458,10 @@ namespace mcap_wrapper
         {
             out &= kv.second.add_arrow_to_3d_object(object_name, pose, shaft_length, shaft_diameter, head_length, head_diameter, color);
         }
+        for (auto &kv : websocket_writers)
+        {
+            out &= kv.second.add_arrow_to_3d_object(object_name, pose, shaft_length, shaft_diameter, head_length, head_diameter, color);
+        }
         return out;
     }
 
@@ -344,6 +472,10 @@ namespace mcap_wrapper
     {
         bool out = true;
         for (auto &kv : file_writers)
+        {
+            out &= kv.second.add_cube_to_3d_object(object_name, pose, size, color);
+        }
+        for (auto &kv : websocket_writers)
         {
             out &= kv.second.add_cube_to_3d_object(object_name, pose, size, color);
         }
@@ -360,6 +492,10 @@ namespace mcap_wrapper
         {
             out &= kv.second.add_sphere_to_3d_object(object_name, pose, size, color);
         }
+        for (auto &kv : websocket_writers)
+        {
+            out &= kv.second.add_sphere_to_3d_object(object_name, pose, size, color);
+        }
         return out;
     }
 
@@ -372,6 +508,10 @@ namespace mcap_wrapper
     {
         bool out = true;
         for (auto &kv : file_writers)
+        {
+            out &= kv.second.add_cylinder_to_3d_object(object_name, pose, bottom_scale, top_scale, size, color);
+        }
+        for (auto &kv : websocket_writers)
         {
             out &= kv.second.add_cylinder_to_3d_object(object_name, pose, bottom_scale, top_scale, size, color);
         }
@@ -392,6 +532,10 @@ namespace mcap_wrapper
         {
             out &= kv.second.add_line_to_3d_object(object_name, pose, thickness, scale_invariant, points, color, colors, indices);
         }
+        for (auto &kv : websocket_writers)
+        {
+            out &= kv.second.add_line_to_3d_object(object_name, pose, thickness, scale_invariant, points, color, colors, indices);
+        }
         return out;
     }
 
@@ -404,6 +548,10 @@ namespace mcap_wrapper
     {
         bool out = true;
         for (auto &kv : file_writers)
+        {
+            out &= kv.second.add_triangle_to_3d_object(object_name, pose, points, color, colors, indices);
+        }
+        for (auto &kv : websocket_writers)
         {
             out &= kv.second.add_triangle_to_3d_object(object_name, pose, points, color, colors, indices);
         }
@@ -423,6 +571,10 @@ namespace mcap_wrapper
         {
             out &= kv.second.add_text_to_3d_object(object_name, pose, billboard, font_size, scale_invariant, color, text);
         }
+        for (auto &kv : websocket_writers)
+        {
+            out &= kv.second.add_text_to_3d_object(object_name, pose, billboard, font_size, scale_invariant, color, text);
+        }
         return out;
     }
 
@@ -430,6 +582,8 @@ namespace mcap_wrapper
     {
         bool out = true;
         for (auto &kv : file_writers)
+            out &= write_3d_object_to(kv.first, object_name, timestamp);
+        for (auto &kv : websocket_writers)
             out &= write_3d_object_to(kv.first, object_name, timestamp);
         return out;
     }
@@ -468,7 +622,15 @@ namespace mcap_wrapper
         //  Network connexion
         //
         //////////////////
-        // TODO: implement it !
+        if(is_network_identifier(connexion_identifier)){
+            // Create schema if not present:
+            if (!websocket_writers[connexion_identifier].is_schema_present(object_name))
+            {
+                nlohmann::json schema_unserialized = nlohmann::json::parse(scene_update_schema);
+                websocket_writers[connexion_identifier].create_schema(object_name, schema_unserialized);
+            }
+            websocket_writers[connexion_identifier].write_3d_object_to_all(object_name, timestamp);
+        }
 
         return true;
     }
@@ -477,6 +639,10 @@ namespace mcap_wrapper
     {
         bool out = true;
         for (auto &kv : file_writers)
+        {
+            out &= write_log_to(kv.first, log_channel_name, timestamp, log_level, message, name, file, line);
+        }
+        for (auto &kv : websocket_writers)
         {
             out &= write_log_to(kv.first, log_channel_name, timestamp, log_level, message, name, file, line);
         }
@@ -533,7 +699,19 @@ namespace mcap_wrapper
         //  Network connexion
         //
         //////////////////
-        // TODO: implement it !
+        if(is_network_identifier(connexion_identifier)){
+            for (auto &kv : websocket_writers)
+            {
+                // Create schema if not present:
+                if (!websocket_writers[connexion_identifier].is_schema_present(log_channel_name))
+                {
+                    nlohmann::json schema_unserialized = nlohmann::json::parse(log_schema);
+                    websocket_writers[connexion_identifier].create_schema(log_channel_name, schema_unserialized);
+                }
+
+                websocket_writers[connexion_identifier].push_sample(log_channel_name, log_json, timestamp);
+            }
+        }
 
         return true;
     }
@@ -542,6 +720,10 @@ namespace mcap_wrapper
     {
         bool out = true;
         for (auto &kv : file_writers)
+        {
+            out &= add_position_to(kv.first, position_channel_name, timestamp, pose, frame_id);
+        }
+        for (auto &kv : websocket_writers)
         {
             out &= add_position_to(kv.first, position_channel_name, timestamp, pose, frame_id);
         }
@@ -579,6 +761,21 @@ namespace mcap_wrapper
             }
 
             file_writers[connexion_identifier].add_position_to_all(position_channel_name, timestamp, pose, frame_id);
+        }
+        ////////////////////
+        //
+        //  Network connexion
+        //
+        //////////////////
+        if(is_network_identifier(connexion_identifier)){
+            // Create schema if not present:
+            if (!websocket_writers[connexion_identifier].is_schema_present(position_channel_name))
+            {
+                nlohmann::json schema_unserialized = nlohmann::json::parse(poses_in_frame_schema);
+                websocket_writers[connexion_identifier].create_schema(position_channel_name, schema_unserialized);
+            }
+
+            websocket_writers[connexion_identifier].add_position_to_all(position_channel_name, timestamp, pose, frame_id);
         }
         return true;
     }
