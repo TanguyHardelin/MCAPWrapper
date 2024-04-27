@@ -1,5 +1,5 @@
-#ifndef MCAP_FILE_WRITER_HPP
-#define MCAP_FILE_WRITER_HPP
+#ifndef MCAP_WEBSOCKET_WRITER_H
+#define MCAP_WEBSOCKET_WRITER_H
 
 #include <string>
 #include <iostream>
@@ -8,20 +8,30 @@
 #include <mutex>
 #include <condition_variable>
 #include <map>
+#include <atomic>
+#include <chrono>
+#include <cmath>
+#include <csignal>
 #include <Eigen/Core>
 #include "mcap/writer.hpp"
 #include "json.hpp"
 #include "Internal3DObject.h"
 #include "utils.hpp"
 
+#include "foxglove_websocket/base64.hpp"
+#include "foxglove_websocket/server_factory.hpp"
+#include "foxglove_websocket/websocket_notls.hpp"
+#include "foxglove_websocket/websocket_server.hpp"
+
+
 namespace mcap_wrapper
 {
-    class MCAPFileWriter
+    class MCAPWebSocketWriter
     {
     public:
         // Constructor / desctructor
-        MCAPFileWriter();
-        ~MCAPFileWriter();
+        MCAPWebSocketWriter();
+        ~MCAPWebSocketWriter();
         /**
          * @brief Open MCAP file in write mode. Will create a dedicated write thread
          *
@@ -29,7 +39,7 @@ namespace mcap_wrapper
          * @return true Open succeed
          * @return false Open failed
          */
-        bool open(std::string file_name);
+        bool open(std::string url, unsigned port, std::string server_name, foxglove::ServerOptions server_options);
         /**
          * @brief Close file and stop writing thread
          *
@@ -239,16 +249,23 @@ namespace mcap_wrapper
         bool add_position_to_all(std::string position_channel_name, uint64_t timestamp, Eigen::Matrix4f pose, std::string frame_id);
 
         // Deffine operator= for std::mutex and std::conditionnal variable
-        MCAPFileWriter &operator=(const MCAPFileWriter &object);
+        MCAPWebSocketWriter &operator=(const MCAPWebSocketWriter &object);
+
+        /**
+         * @brief Add a callback function that could be called by Foxglove studio
+         * 
+         * @param cb_function the function in itself
+         */
+        void add_callback_function(std::function<void(foxglove::WebSocketLogLevel, char const*)> cb_function);
 
     protected:
         void run(); // Function used for storing data into file
 
         // Attributes:
-        mcap::McapWriter _file_writer;                                      // File writer object
-        std::mutex _file_writer_mtx;                                        // Mutex of `_file_writer`
-        std::map<std::string, mcap::Channel> _all_channels;                 // All channels schema
-        std::queue<mcap::Message> _data_queue;                              // Data FIFO (used by write thread to get data)
+        std::unique_ptr<foxglove::ServerInterface<websocketpp::connection_hdl>> _server_writer;  // File writer object
+        std::mutex _server_writer_mtx;                                        // Mutex of `server_writer`
+        std::map<std::string, foxglove::ChannelId> _all_channels;                 // All channels schema
+        std::queue<std::pair<foxglove::ChannelId,nlohmann::json>> _data_queue;                              // Data FIFO (used by write thread to get data)
         std::mutex _data_queue_mtx;                                         // Mutex of `_data_queue`
         std::thread *_writing_thread;                                       // Writing thread
         bool _continue_writing;                                             // Variable used for indicating to the writing thread if write must continue;
@@ -256,8 +273,9 @@ namespace mcap_wrapper
         std::map<std::string, std::string> _defined_schema;                 // Is usefull for keeping trace of defined schema
         std::map<std::string, Internal3DObject> _all_3d_object;             // Definition of all 3D objects.
         std::map<std::string, std::vector<Eigen::Matrix4f>> _all_positions; // Keep track of all positions for a dedicated channel
+        std::vector<std::function<void(foxglove::WebSocketLogLevel, char const*)>> _all_server_callback; // Keep trace of all server callback function
+        bool is_server_open = false;                                        // Is server open
     };
 
 };
-
 #endif

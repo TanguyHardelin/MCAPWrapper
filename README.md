@@ -4,6 +4,11 @@ According to [foxglove](https://foxglove.dev) MCAP is a standardized container f
 This project aim to provide a wrapper for writing MCAP in a simplified way. With this project it should be possible to write MCAP and use foxglove in minutes instead of hours.
 
 ## Build and install 
+Install dependencies:
+```bash
+sudo apt install libwebsocketpp-dev
+```
+Build and install repository
 ```bash
 git clone https://github.com/TanguyHardelin/MCAPWrapper.git
 cd MCAPWrapper
