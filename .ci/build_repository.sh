@@ -5,6 +5,7 @@ sudo apt update
 sudo apt install build-essential
 sudo apt install cmake
 sudo apt install libssl-dev      
+sudo apt install libopencv-dev   
 sudo apt install libwebsocketpp-dev
 
 
