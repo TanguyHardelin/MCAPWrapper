@@ -2,6 +2,7 @@
 
 # Install dependency
 sudo apt update
+sudo apt upgrade
 sudo apt install build-essential
 sudo apt install cmake
 sudo apt install libssl-dev      
