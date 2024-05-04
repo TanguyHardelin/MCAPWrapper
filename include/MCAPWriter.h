@@ -5,6 +5,7 @@
 #include <Eigen/Core>
 #include <opencv2/core.hpp>
 
+
 namespace mcap_wrapper
 {
     /**

@@ -8,17 +8,6 @@ set(CMAKE_CXX_STANDARD 17)
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-
-# # Include WebSocketpp if it is not installed
-# FetchContent_Declare(websocketpp
-# GIT_REPOSITORY https://github.com/zaphoyd/websocketpp.git
-#   GIT_TAG 0.8.2)
-# FetchContent_GetProperties(websocketpp)
-# if(NOT websocketpp_POPULATED)
-#   FetchContent_Populate(websocketpp)
-#   add_subdirectory(${websocketpp_SOURCE_DIR} ${websocketpp_BINARY_DIR} EXCLUDE_FROM_ALL)
-# endif()
-
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 # `MCAP_WRAPPER_PATH` is used for locating sources
@@ -45,3 +34,15 @@ FILE(GLOB_RECURSE FOXGLOVE_WEBSOCKET_SOURCE_FILE "${MCAP_WRAPPER_PATH}/third_par
 project(mcap_wrapper)
 add_library(mcap_wrapper SHARED ${SOURCE_FILE} ${MCAP_SOURCE_FILE} ${FOXGLOVE_WEBSOCKET_SOURCE_FILE})
 target_link_libraries(mcap_wrapper lz4 zstd Eigen3::Eigen ${OpenCV_LIBRARIES} ssl)
+
+# Install instruction:
+set(MCAP_WRAPPER_PUBLIC_HEADER "${MCAP_WRAPPER_PATH}/include/MCAPWriter.h" "${MCAP_WRAPPER_PATH}/include/MCAPReader.h")
+set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${MCAP_WRAPPER_PUBLIC_HEADER}")
+
+install(TARGETS mcap_wrapper 
+        LIBRARY 
+            DESTINATION /usr/local/mcap_wrapper/lib)
+install(FILES include/MCAPWriter.h include/MCAPReader.h DESTINATION /usr/local/mcap_wrapper/includes)
+install(FILES cmake/MCAPWrapperConfig.cmake DESTINATION /usr/local/mcap_wrapper/cmake)
+install(FILES cmake/MCAPWrapperConfig.cmake DESTINATION /usr/lib/cmake)
+

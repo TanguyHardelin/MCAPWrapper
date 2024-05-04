@@ -2,15 +2,15 @@ cmake_minimum_required(VERSION 3.18)
 
 # Include OpenCV library
 find_package(OpenCV 4 REQUIRED)
-include_directories(${OpenCV_INCLUDE_DIRS})
+find_package(Eigen3 REQUIRED)
+find_package(MCAPWrapper REQUIRED)
 
-# Include `mcap_wrapper` library
-set(MCAP_WRAPPER_PATH ${CMAKE_SOURCE_DIR}/../..)
-include(${MCAP_WRAPPER_PATH}/CMakeLists.txt) # Compilation of library
-include_directories(${MCAP_WRAPPER_PATH}/include) # Headers
+include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(${EIGEN3_INCLUDE_DIR})
+include_directories(${MCAPWRAPPER_INCLUDE_DIR}) # Headers
 
 project(SimplePositionWriter)
 add_executable(SimplePositionWriter ${CMAKE_SOURCE_DIR}/src/main.cpp)
 # Signal ressource folder
 target_compile_definitions(SimplePositionWriter PRIVATE RESSOURCE_PATH="${CMAKE_SOURCE_DIR}/ressources")
-target_link_libraries(SimplePositionWriter mcap_wrapper ${OpenCV_LIBRARIES})
+target_link_libraries(SimplePositionWriter ${MCAPWRAPPER_LIBRARIES} ${OpenCV_LIBRARIES})

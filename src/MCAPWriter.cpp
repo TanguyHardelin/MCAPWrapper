@@ -8,6 +8,8 @@
 #include <fstream>
 #include <opencv2/imgcodecs.hpp>
 
+
+
 namespace mcap_wrapper
 {
     // Each file stream is stored into dictionnary for being called later.
