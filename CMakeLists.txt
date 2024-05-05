@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.18)
 # Set C++ 17 (for mcap)
 set(CMAKE_CXX_STANDARD 17)
 
-
 # Dependencies:
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -20,6 +19,9 @@ include_directories(${MCAP_WRAPPER_PATH}/include)
 include_directories(${MCAP_WRAPPER_PATH}/third_parties/)
 include_directories(${MCAP_WRAPPER_PATH}/third_parties/mcap)
 include_directories(${MCAP_WRAPPER_PATH}/third_parties/foxglove_websocket)
+
+# Set the library output directory
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 
 # Find source file:
 FILE(GLOB_RECURSE SOURCE_FILE "${MCAP_WRAPPER_PATH}/src/*.c*")
