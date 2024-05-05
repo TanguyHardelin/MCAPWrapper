@@ -23,8 +23,9 @@ int main(int argc, char **argv)
     // Camera calibration:
     mcap_wrapper::write_camera_calibration_all("simpleCamera",
                                                std::chrono::system_clock::now().time_since_epoch().count(), 
-                                               "simple_image_tttt",
+                                               "simple_image_frame",
                                                image.cols, image.rows, "rational_polynomial", 
+                                               /*All the values above are fake. Replace it by your real one*/
                                                {0, 0, 0, 0, 0}, {100, 0, 0, 0, 100, 0, 0, 0, 1}, {1, 0, 0, 1, 0, 0, 0, 1}, {100, 0, 0, 0, 0, 100, 0, 0, 0, 0, 1, 0});
 
         // Add transform:
@@ -33,11 +34,12 @@ int main(int argc, char **argv)
     // Write data into file:
     for (unsigned i = 0; ; i++)
     {
-        // TODO write it only in network
+        // Since network do not start right away we need to push this every time to be sure that it is received
         mcap_wrapper::write_camera_calibration_all("simpleCamera",
                                                std::chrono::system_clock::now().time_since_epoch().count(), 
-                                               "simple_image_tttt",
+                                               "simple_image_frame",
                                                image.cols, image.rows, "rational_polynomial", 
+                                               /*All the values above are fake. Replace it by your real one*/
                                                {0, 0, 0, 0, 0}, {100, 0, 0, 0, 100, 0, 0, 0, 1}, {1, 0, 0, 1, 0, 0, 0, 1}, {100, 0, 0, 0, 0, 100, 0, 0, 0, 0, 1, 0});
 
         cv::Mat image_to_save = image.clone();
@@ -48,10 +50,10 @@ int main(int argc, char **argv)
 
         // Save it:
         // mcap_wrapper::add_position_to_all("simple_image_position", current_timestamp, current_position);
-        mcap_wrapper::add_frame_transform_to_all("simple_image_id", current_timestamp, "root", "simple_image_tttt", current_position);
+        mcap_wrapper::add_frame_transform_to_all("simple_image_id", current_timestamp, "root", "simple_image_frame", current_position);
 
         // Save image:
-        mcap_wrapper::write_image_to_all("simple_image", image_to_save, current_timestamp, "simple_image_tttt");
+        mcap_wrapper::write_image_to_all("simple_image", image_to_save, current_timestamp, "simple_image_frame");
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
