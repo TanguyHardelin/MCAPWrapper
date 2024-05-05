@@ -9,6 +9,7 @@
 int main(int argc, char **argv){
     // Open MCAP writer:
     mcap_wrapper::open_file_connexion("simple.mcap");
+    mcap_wrapper::open_network_connexion("0.0.0.0", 8765, "simple_server");
 
     // Open cv::Mat image
     std::string image_path = RESSOURCE_PATH; // `RESSOURCE_PATH` is defined in cmake
