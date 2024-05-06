@@ -8,9 +8,9 @@ jobs:
       - uses: actions/checkout@v4
       - run: sudo apt update
       - run: sudo apt upgrade      
-      - run: sudo apt install build-essential cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev 
-      - run: sudo apt install python3 python3-pip libopencv-dev python3-opencv
-      - run: sudo apt install libwebsocketpp-dev
+      - run: sudo apt install -y build-essential cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev 
+      - run: sudo apt install -y python3 python3-pip libopencv-dev python3-opencv
+      - run: sudo apt install -y libwebsocketpp-dev
       - run: export OpenCV_DIR=/usr/local/share/OpenCV
       - run: chmod +x ./.ci/build_repository.sh
       - run: ./.ci/build_repository.sh
