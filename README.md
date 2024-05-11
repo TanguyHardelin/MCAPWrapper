@@ -38,7 +38,7 @@ int main(int argc, char **argv){
         test_json["c"] = -1157.0;
         test_json["d"] = nlohmann::json();
         test_json["d"]["a"] = i * 150.0;
-        test_json["d"]["b"] = "titi";
+        test_json["d"]["b"] = "foo";
         test_json["d"]["c"] = 0;
 
         // Put it to file
