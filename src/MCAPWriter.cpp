@@ -8,8 +8,6 @@
 #include <fstream>
 #include <opencv2/imgcodecs.hpp>
 
-
-
 namespace mcap_wrapper
 {
     // Each file stream is stored into dictionnary for being called later.
@@ -98,6 +96,25 @@ namespace mcap_wrapper
         if (number_of_connexion_presents == 0)
             return false;
 
+
+        // Encode image for all connections:
+        std::vector<int> compression_params;
+        compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+        compression_params.push_back(95); // Adjust the quality (0-100), higher is better quality
+        std::vector<uchar> encoding_buffer;
+        cv::imencode(".jpg", image, encoding_buffer, compression_params);
+        std::string image_base64_encoded = base64::to_base64(std::string(encoding_buffer.begin(), encoding_buffer.end()));
+
+        // Create message:
+        nlohmann::json image_sample;
+        image_sample["timestamp"] = nlohmann::json();
+        image_sample["timestamp"]["sec"] = timestamp / (uint64_t)1e9;
+        image_sample["timestamp"]["nsec"] = timestamp % (uint64_t)1e9;
+        image_sample["frame_id"] = frame_id;
+        image_sample["data"] = image_base64_encoded;
+        image_sample["format"] = "jpeg";
+
+        // Write it to all connections:
         ////////////////////
         //
         //  File connexion
@@ -110,24 +127,7 @@ namespace mcap_wrapper
             {
                 nlohmann::json schema_unserialized = nlohmann::json::parse(compressed_image_schema);
                 file_writers[connexion_identifier].create_schema(identifier, schema_unserialized);
-            }            
-
-            nlohmann::json image_sample;
-            image_sample["timestamp"] = nlohmann::json();
-            image_sample["timestamp"]["sec"] = timestamp / (uint64_t)1e9;
-            image_sample["timestamp"]["nsec"] = timestamp % (uint64_t)1e9;
-            image_sample["frame_id"] = frame_id;
-            // Encode image in JPEG
-            std::vector<int> compression_params;
-            compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-            compression_params.push_back(95); // Adjust the quality (0-100), higher is better quality
-
-            std::vector<uchar> encoding_buffer;
-            cv::imencode(".jpg", image, encoding_buffer, compression_params);
-            // Foxglove wait buffer data in base64 so we need to convert it
-            image_sample["data"] = base64::to_base64(std::string(encoding_buffer.begin(), encoding_buffer.end()));
-            image_sample["format"] = "jpeg";
-
+            }
             file_writers[connexion_identifier].push_sample(identifier, image_sample, timestamp);
         }
         ////////////////////
@@ -141,24 +141,7 @@ namespace mcap_wrapper
             {
                 nlohmann::json schema_unserialized = nlohmann::json::parse(compressed_image_schema);
                 websocket_writers[connexion_identifier].create_schema(identifier, schema_unserialized);
-            }            
-
-            nlohmann::json image_sample;
-            image_sample["timestamp"] = nlohmann::json();
-            image_sample["timestamp"]["sec"] = timestamp / (uint64_t)1e9;
-            image_sample["timestamp"]["nsec"] = timestamp % (uint64_t)1e9;
-            image_sample["frame_id"] = frame_id;
-            // Encode image in JPEG
-            std::vector<int> compression_params;
-            compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-            compression_params.push_back(95); // Adjust the quality (0-100), higher is better quality
-
-            std::vector<uchar> encoding_buffer;
-            cv::imencode(".jpg", image, encoding_buffer, compression_params);
-            // Foxglove wait buffer data in base64 so we need to convert it
-            image_sample["data"] = base64::to_base64(std::string(encoding_buffer.begin(), encoding_buffer.end()));
-            image_sample["format"] = "jpeg";
-
+            }        
             websocket_writers[connexion_identifier].push_sample(identifier, image_sample, timestamp);
         }
 
@@ -221,6 +204,19 @@ namespace mcap_wrapper
         if (number_of_connexion_presents == 0)
             return false;
 
+        nlohmann::json camera_calibration;
+        camera_calibration["timestamp"] = nlohmann::json();
+        camera_calibration["timestamp"]["sec"] = (uint64_t)timestamp / (uint64_t)1e9;
+        camera_calibration["timestamp"]["nsec"] = (uint64_t)timestamp % (uint64_t)1e9;
+        camera_calibration["frame_id"] = frame_id;
+        camera_calibration["width"] = image_width;
+        camera_calibration["height"] = image_height;
+        camera_calibration["distortion_model"] = distortion_model;
+        camera_calibration["D"] = D;
+        camera_calibration["K"] = K;
+        camera_calibration["R"] = R;
+        camera_calibration["P"] = P;
+
         ////////////////////
         //
         //  File connexion
@@ -234,19 +230,6 @@ namespace mcap_wrapper
                 nlohmann::json camera_calibration_foxglove_schema = nlohmann::json::parse(camera_calibration_schema);
                 file_writers[connexion_identifier].create_schema(camera_identifier, camera_calibration_foxglove_schema); 
             }
-
-            nlohmann::json camera_calibration;
-            camera_calibration["timestamp"] = nlohmann::json();
-            camera_calibration["timestamp"]["sec"] = (uint64_t)timestamp / (uint64_t)1e9;
-            camera_calibration["timestamp"]["nsec"] = (uint64_t)timestamp % (uint64_t)1e9;
-            camera_calibration["frame_id"] = frame_id;
-            camera_calibration["width"] = image_width;
-            camera_calibration["height"] = image_height;
-            camera_calibration["distortion_model"] = distortion_model;
-            camera_calibration["D"] = D;
-            camera_calibration["K"] = K;
-            camera_calibration["R"] = R;
-            camera_calibration["P"] = P;
             file_writers[connexion_identifier].push_sample(camera_identifier, camera_calibration, timestamp);
         }
         ////////////////////
@@ -261,19 +244,6 @@ namespace mcap_wrapper
                 nlohmann::json camera_calibration_foxglove_schema = nlohmann::json::parse(camera_calibration_schema);
                 websocket_writers[connexion_identifier].create_schema(camera_identifier, camera_calibration_foxglove_schema); 
             }
-
-            nlohmann::json camera_calibration;
-            camera_calibration["timestamp"] = nlohmann::json();
-            camera_calibration["timestamp"]["sec"] = (uint64_t)timestamp / (uint64_t)1e9;
-            camera_calibration["timestamp"]["nsec"] = (uint64_t)timestamp % (uint64_t)1e9;
-            camera_calibration["frame_id"] = frame_id;
-            camera_calibration["width"] = image_width;
-            camera_calibration["height"] = image_height;
-            camera_calibration["distortion_model"] = distortion_model;
-            camera_calibration["D"] = D;
-            camera_calibration["K"] = K;
-            camera_calibration["R"] = R;
-            camera_calibration["P"] = P;
             websocket_writers[connexion_identifier].push_sample(camera_identifier, camera_calibration, timestamp);
         }
 
@@ -360,6 +330,19 @@ namespace mcap_wrapper
         if (number_of_connexion_presents == 0)
             return false;
 
+        // Create transform object
+        nlohmann::json frame_tranform;
+        frame_tranform["timestamp"] = nlohmann::json();
+        frame_tranform["timestamp"]["sec"] = (uint64_t)timestamp / (uint64_t)1e9;
+        frame_tranform["timestamp"]["nsec"] = (uint64_t)timestamp % (uint64_t)1e9;
+        if (parent.size() > 1)
+            frame_tranform["parent_frame_id"] = parent;
+        if (child.size() > 1)
+            frame_tranform["child_frame_id"] = child;
+        nlohmann::json serialized_pose = Internal3DObject::pose_serializer(pose);
+        frame_tranform["translation"] = serialized_pose["position"];
+        frame_tranform["rotation"] = serialized_pose["orientation"];
+
         ////////////////////
         //
         //  File connexion
@@ -373,20 +356,6 @@ namespace mcap_wrapper
                 nlohmann::json schema_unserialized = nlohmann::json::parse(frame_transform_schema);
                 file_writers[connexion_identifier].create_schema(transform_name, schema_unserialized);
             }
-
-            // Create transform object
-            nlohmann::json frame_tranform;
-            frame_tranform["timestamp"] = nlohmann::json();
-            frame_tranform["timestamp"]["sec"] = (uint64_t)timestamp / (uint64_t)1e9;
-            frame_tranform["timestamp"]["nsec"] = (uint64_t)timestamp % (uint64_t)1e9;
-            if (parent.size() > 1)
-                frame_tranform["parent_frame_id"] = parent;
-            if (child.size() > 1)
-                frame_tranform["child_frame_id"] = child;
-            nlohmann::json serialized_pose = Internal3DObject::pose_serializer(pose);
-            frame_tranform["translation"] = serialized_pose["position"];
-            frame_tranform["rotation"] = serialized_pose["orientation"];
-
             write_JSON_to(connexion_identifier, transform_name, frame_tranform.dump(), timestamp);
         }
         ////////////////////
@@ -401,20 +370,6 @@ namespace mcap_wrapper
                 nlohmann::json schema_unserialized = nlohmann::json::parse(frame_transform_schema);
                 websocket_writers[connexion_identifier].create_schema(transform_name, schema_unserialized);
             }
-
-            // Create transform object
-            nlohmann::json frame_tranform;
-            frame_tranform["timestamp"] = nlohmann::json();
-            frame_tranform["timestamp"]["sec"] = (uint64_t)timestamp / (uint64_t)1e9;
-            frame_tranform["timestamp"]["nsec"] = (uint64_t)timestamp % (uint64_t)1e9;
-            if (parent.size() > 1)
-                frame_tranform["parent_frame_id"] = parent;
-            if (child.size() > 1)
-                frame_tranform["child_frame_id"] = child;
-            nlohmann::json serialized_pose = Internal3DObject::pose_serializer(pose);
-            frame_tranform["translation"] = serialized_pose["position"];
-            frame_tranform["rotation"] = serialized_pose["orientation"];
-
             write_JSON_to(connexion_identifier, transform_name, frame_tranform.dump(), timestamp);
         }
             
