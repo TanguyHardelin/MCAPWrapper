@@ -46,5 +46,4 @@ install(TARGETS mcap_wrapper
             DESTINATION /usr/local/mcap_wrapper/lib)
 install(FILES include/MCAPWriter.h include/MCAPReader.h DESTINATION /usr/local/mcap_wrapper/includes)
 install(FILES cmake/MCAPWrapperConfig.cmake DESTINATION /usr/local/mcap_wrapper/cmake)
-install(FILES cmake/MCAPWrapperConfig.cmake DESTINATION /usr/lib/cmake)
-
+install(FILES cmake/MCAPWrapperConfig.cmake DESTINATION /usr/lib/cmake/MCAPWrapper)

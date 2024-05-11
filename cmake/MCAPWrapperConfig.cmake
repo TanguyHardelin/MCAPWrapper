@@ -25,6 +25,6 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 # Define the module paths
 set(MCAPWRAPPER_INCLUDE_DIR "/usr/local/mcap_wrapper/includes")
 set(MCAPWRAPPER_LIBRARY_DIR "/usr/local/mcap_wrapper/lib")
-set(MCAPWRAPPER_LIBRARIES "/usr/local/mcap_wrapper/lib/libmcap_wrapper.a" lz4 zstd Eigen3::Eigen ${OpenCV_LIBRARIES} ssl)
+set(MCAPWRAPPER_LIBRARIES "/usr/local/mcap_wrapper/lib/libmcap_wrapper.so" lz4 zstd Eigen3::Eigen ${OpenCV_LIBRARIES} ssl)
 
 
