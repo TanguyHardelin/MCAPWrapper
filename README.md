@@ -54,3 +54,13 @@ int main(int argc, char **argv){
 ```
 
 Other examples are available in [examples folder](https://github.com/TanguyHardelin/MCAPWrapper/tree/main/examples)
+
+
+# TODO
+- Fix CI build
+- Polymorphisme
+- Sync
+- Test on compression runtime
+- Test on sync
+- Async compression
+- Rename `write_3d_object_to_all`

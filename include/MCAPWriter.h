@@ -51,6 +51,15 @@ namespace mcap_wrapper
      */
     void close_all_network();
     /**
+     * @brief Set connection referenced with `connection_name` to be sync. Sync connection wait the end of it write for return
+     * 
+     * @param connection_name connection to be sync
+     * @param sync should the connection must be sync
+     * @return true connection found
+     * @return false connection not found
+     */
+    bool set_connection_to_be_sync(std::string connection_name, bool sync);
+    /**
      * @brief Write image into all MCAP connexion. Connexion can be files or live foxglove-studio.
      *
      * @param identifier identifier to where write the input image

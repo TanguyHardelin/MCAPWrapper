@@ -258,6 +258,13 @@ namespace mcap_wrapper
          */
         void add_callback_function(std::function<void(foxglove::WebSocketLogLevel, char const*)> cb_function);
 
+        /**
+         * @brief Set the sync mode. In sync mode every write must wait it end to return
+         * 
+         * @param sync Is suposed to be sync
+         */
+        void set_sync(bool sync);
+
     protected:
         void run(); // Function used for storing data into file
 
@@ -275,6 +282,9 @@ namespace mcap_wrapper
         std::map<std::string, std::vector<Eigen::Matrix4f>> _all_positions; // Keep track of all positions for a dedicated channel
         std::vector<std::function<void(foxglove::WebSocketLogLevel, char const*)>> _all_server_callback; // Keep trace of all server callback function
         bool is_server_open = false;                                        // Is server open
+        bool is_write_sync = false;                                         // Attribute that is used for knowing if write should be sync
+        std::mutex write_is_being_process;                                  // Mutex that is grab during the whole write process
+        std::condition_variable write_finished_adviser;                     // Conditional variable that is notified when whole data were wrote
     };
 
 };

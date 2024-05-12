@@ -96,6 +96,12 @@ namespace mcap_wrapper
     {
         if (!is_schema_present(channel_name))
             infer_schema(channel_name, sample);
+        
+        // If we are in sync mode we wait that current write was proceed
+        if(is_write_sync){
+            std::lock_guard lg(write_is_being_process);
+        }
+
         mcap::Message msg;
         msg.channelId = _all_channels[channel_name].id;
         // Since we do not know when data is emitted we set `publishTime` equal to `logTime`
@@ -112,6 +118,11 @@ namespace mcap_wrapper
         _data_queue.push(msg);
         // Notify writing thread that some work need to be perform:
         _write_notifier.notify_all();
+
+        // If we are in sync mode we wait that data was wrote
+        std::mutex mtx;
+        std::unique_lock ul(mtx);
+        write_finished_adviser.wait_for(ul, std::chrono::seconds(1)); // 1 second of timeout to avoid blocking
     }
 
     //
@@ -128,6 +139,9 @@ namespace mcap_wrapper
             // Check ending condition
             if (!_continue_writing && _data_queue.size() == 0) // Check that no data are being waiting to be writted
                 break;
+
+            // Take mutex of write is process for inform every sync source that data are currently write:
+            std::lock_guard write_is_process(write_is_being_process);
 
             // Protect `_data_queue` and copy it data
             std::queue<mcap::Message> data_to_write;
@@ -150,8 +164,16 @@ namespace mcap_wrapper
                 // Delete previous allocated data:
                 delete data.data;
             }
+
+            // Notify all sync that data were wrote
+            write_finished_adviser.notify_all();
         }
     }
+
+    void MCAPFileWriter::set_sync(bool sync){
+        is_write_sync = sync;
+    }
+
     void MCAPFileWriter::create_3D_object(std::string object_name, std::string frame_id, bool frame_locked)
     {
         _all_3d_object[object_name] = Internal3DObject (object_name, frame_id, frame_locked);

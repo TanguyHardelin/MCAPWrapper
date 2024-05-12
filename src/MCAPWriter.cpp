@@ -148,6 +148,24 @@ namespace mcap_wrapper
         return true;
     }
 
+
+
+    bool set_connection_to_be_sync(std::string connection_name, bool sync){
+        unsigned number_of_connexion_presents = get_number_of_connexion_presents_for_identifier(connection_name);
+        if (number_of_connexion_presents == 0)
+            return false;
+        if (is_file_identifier(connection_name))
+        {
+            file_writers[connection_name].set_sync(sync);
+            return true;
+        }
+        if (is_network_identifier(connection_name)){
+            websocket_writers[connection_name].set_sync(sync);
+            return true;
+        }
+        return false;
+    }
+
     bool write_camera_calibration_all(std::string camera_identifier,
                                      uint64_t timestamp,
                                      std::string frame_id,

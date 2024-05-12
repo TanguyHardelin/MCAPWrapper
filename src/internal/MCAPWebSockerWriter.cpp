@@ -114,6 +114,12 @@ namespace mcap_wrapper
     {
         if (!is_schema_present(channel_name))
             infer_schema(channel_name, sample);
+
+        // If we are in sync mode we wait that current write was proceed
+        if(is_write_sync){
+            std::lock_guard lg(write_is_being_process);
+        }
+    
         std::pair<foxglove::ChannelId,nlohmann::json> data_sample;
         data_sample.first = _all_channels[channel_name];
         data_sample.second = sample;
@@ -122,6 +128,11 @@ namespace mcap_wrapper
         _data_queue.push(data_sample);
         // Notify writing thread that some work need to be perform:
         _write_notifier.notify_all();
+
+        // If we are in sync mode we wait that data was wrote
+        std::mutex mtx;
+        std::unique_lock ul(mtx);
+        write_finished_adviser.wait_for(ul, std::chrono::seconds(1)); // 1 second of timeout to avoid blocking
     }
 
     void MCAPWebSocketWriter::create_3D_object(std::string object_name, std::string frame_id, bool frame_locked)
@@ -298,6 +309,9 @@ namespace mcap_wrapper
             if (!_continue_writing && _data_queue.size() == 0) // Check that no data are being waiting to be writted
                 break;
 
+            // Take mutex of write is process for inform every sync source that data are currently write:
+            std::lock_guard write_is_process(write_is_being_process);
+
             // Protect `_data_queue` and copy it data
             std::queue<std::pair<foxglove::ChannelId,nlohmann::json>> data_to_write;
             {
@@ -319,6 +333,13 @@ namespace mcap_wrapper
                                serialized_data.size());
                 
             }
+
+            // Notify all sync that data were wrote
+            write_finished_adviser.notify_all();
         }
+    }
+
+    void MCAPWebSocketWriter::set_sync(bool sync){
+        is_write_sync = sync;
     }
 };
