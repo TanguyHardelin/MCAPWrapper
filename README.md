@@ -59,7 +59,6 @@ Other examples are available in [examples folder](https://github.com/TanguyHarde
 # TODO
 - Fix CI build
 - Polymorphisme
-- Sync
 - Test on compression runtime
 - Test on sync
 - Async compression
