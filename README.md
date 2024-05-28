@@ -58,8 +58,6 @@ Other examples are available in [examples folder](https://github.com/TanguyHarde
 
 # TODO
 - Fix CI build
-- Polymorphisme
 - Test on compression runtime
 - Test on sync
 - Async compression
-- Rename `write_3d_object_to_all`
