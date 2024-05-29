@@ -4,10 +4,7 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Service containers to run with `container-job`
-    services:
-      postgres:
-        image: tanguyhardelin/ubuntu-with-opencv:22.04
+    container: tanguyhardelin/ubuntu-with-opencv:22.04
     steps:
       - uses: actions/checkout@v4
       - run: chmod +x ./.ci/build_repository.sh
