@@ -3,7 +3,7 @@ run-name: ${{ github.actor }} is learning GitHub Actions
 on: [push]
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: tanguyhardelin/ubuntu-with-opencv:22.04
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt update
