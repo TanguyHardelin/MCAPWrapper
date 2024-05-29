@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Install dependency
+sudo apt install libwebsocketpp-dev
 
 # Uodate ldconfig
 sudo ldconfig
