@@ -6,17 +6,9 @@ jobs:
     runs-on: ubuntu-latest
     # Service containers to run with `container-job`
     services:
-      # Label used to access the service container
       postgres:
-        # Docker Hub image
         image: tanguyhardelin/ubuntu-with-opencv:22.04
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt update
-      - run: sudo apt upgrade      
-      - run: sudo apt install -y build-essential cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev 
-      - run: sudo apt install -y python3 python3-pip libopencv-dev python3-opencv
-      - run: sudo apt install -y libwebsocketpp-dev
-      - run: export OpenCV_DIR=/usr/local/share/OpenCV
       - run: chmod +x ./.ci/build_repository.sh
       - run: ./.ci/build_repository.sh
