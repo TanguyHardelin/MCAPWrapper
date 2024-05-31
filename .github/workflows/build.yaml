@@ -3,7 +3,6 @@ run-name: Build repository
 on: [push]
 jobs:
   build:
-    stage: build
     runs-on: ubuntu-latest
     container: tanguyhardelin/ubuntu-with-opencv:22.04
     steps:
@@ -18,7 +17,6 @@ jobs:
               lib
               include
   create_installer:
-    stage: build
     needs: build
     runs-on: ubuntu-latest
     container: tanguyhardelin/ubuntu-with-opencv:22.04
