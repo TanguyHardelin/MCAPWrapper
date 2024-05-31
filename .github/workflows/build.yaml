@@ -3,6 +3,7 @@ run-name: Build repository
 on: [push]
 jobs:
   build:
+    stage: build
     runs-on: ubuntu-latest
     container: tanguyhardelin/ubuntu-with-opencv:22.04
     steps:
@@ -17,6 +18,7 @@ jobs:
               lib
               include
   create_installer:
+    stage: build
     needs: build
     runs-on: ubuntu-latest
     container: tanguyhardelin/ubuntu-with-opencv:22.04
@@ -29,6 +31,6 @@ jobs:
       - name: Add permission for executing the installer script
         run: chmod +x ./.ci/build_installer.sh
       - name: Execute create installer script
-        run: ./.ci/build_installer.sh
+        run: cd ./.ci && ./build_installer.sh
 
 
