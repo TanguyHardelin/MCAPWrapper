@@ -30,5 +30,10 @@ jobs:
         run: chmod +x ./.ci/build_installer.sh
       - name: Execute create installer script
         run: cd ./.ci && ./build_installer.sh
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with: 
+          name: mcap-wrapper-installer
+          path: .ci/install_dependencies/install_mcap_wrapper
 
 
