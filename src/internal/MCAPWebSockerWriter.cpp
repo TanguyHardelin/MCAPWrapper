@@ -107,9 +107,11 @@ namespace mcap_wrapper
         _write_notifier.notify_all();
 
         // If we are in sync mode we wait that data was wrote
-        std::mutex mtx;
-        std::unique_lock ul(mtx);
-        write_finished_adviser.wait_for(ul, std::chrono::seconds(1)); // 1 second of timeout to avoid blocking
+        if(is_write_sync){
+            std::mutex mtx;
+            std::unique_lock ul(mtx);
+            write_finished_adviser.wait_for(ul, std::chrono::seconds(1)); // 1 second of timeout to avoid blocking
+        }
     }
 
     // Deffine operator= for std::mutex and std::conditionnal variable

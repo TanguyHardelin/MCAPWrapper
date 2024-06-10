@@ -44,6 +44,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${MCAP_WRAPPER_P
 install(TARGETS mcap_wrapper 
         LIBRARY 
             DESTINATION /usr/local/mcap_wrapper/lib)
-install(FILES include/MCAPWriter.h include/MCAPReader.h DESTINATION /usr/local/mcap_wrapper/includes)
+install(FILES include/MCAPWriter.h include/MCAPReader.h include/define.h DESTINATION /usr/local/mcap_wrapper/includes)
 install(FILES cmake/MCAPWrapperConfig.cmake DESTINATION /usr/local/mcap_wrapper/cmake)
 install(FILES cmake/MCAPWrapperConfig.cmake DESTINATION /usr/lib/cmake/MCAPWrapper)

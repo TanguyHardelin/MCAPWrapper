@@ -20,9 +20,10 @@ namespace mcap_wrapper
         if (open_file_connexion == "")
             open_file_connexion = file_path;
         auto file_writer = std::make_shared<MCAPFileWriter>();
-        if (file_writer->open(file_path))
+        if (file_writer->open(file_path)){
+            all_writers[open_file_connexion] = file_writer;
             return true;
-        all_writers[open_file_connexion] = file_writer;
+        }
         return false;
     }
 

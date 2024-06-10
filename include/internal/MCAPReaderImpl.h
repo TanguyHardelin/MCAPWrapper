@@ -1,19 +1,21 @@
-#ifndef MCAP_READER_HPP
-#define MCAP_READER_HPP
+#ifndef MCAP_READER_IMPLEMENTATION_HPP
+#define MCAP_READER_IMPLEMENTATION_HPP
 
 #include <string>
 #include <vector>
 #include <map>
-#include <memory>
 #include <iostream>
 #include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include "internal/Base64.hpp"
+#include "internal/json.hpp"
+#include "mcap/reader.hpp"
 #include "define.h"
+
 
 namespace mcap_wrapper
 {
-    class MCAPReaderImpl;
-
-    class MCAPReader
+    class MCAPReaderImpl
     {
     public:
         /**
@@ -21,8 +23,8 @@ namespace mcap_wrapper
          *
          * @param file_path path to mcap file
          */
-        MCAPReader(std::string file_path);
-        ~MCAPReader();
+        MCAPReaderImpl(std::string file_path);
+        ~MCAPReaderImpl();
         /**
          * @brief Get all channels presents in MCAP with it type
          * 
@@ -58,7 +60,11 @@ namespace mcap_wrapper
         bool get_next_logs(std::string channel_name, std::string & out_log);
 
     protected:
-        std::shared_ptr<MCAPReaderImpl> _impl;
+        std::map<std::string, MCAPReaderChannelType> _channels_description;
+        mcap::McapReader _file_reader;
+        bool _is_file_open = false;
+        std::map<std::string, std::shared_ptr<mcap::LinearMessageView>> _channel_message_view;
+        std::map<std::string, std::shared_ptr<mcap::LinearMessageView::Iterator>> _channel_iterator;
     };
 
 }; // namespace mcap_wrapper

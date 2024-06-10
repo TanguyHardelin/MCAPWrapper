@@ -5,6 +5,7 @@
 #include <opencv2/highgui.hpp>
 #include "MCAPReader.h"
 #include "MCAPWriter.h"
+#include "json.hpp"
 
 double calculatePSNR(const cv::Mat& I1, const cv::Mat& I2);
 
@@ -38,12 +39,21 @@ int main(int argc, char **argv)
         cv::Mat sample_image = reference_image.clone();
         int kernel_size = std::max(3, rand()%7);
         cv::blur(sample_image, sample_image, cv::Size(kernel_size, kernel_size));
+        auto t0 = std::chrono::high_resolution_clock::now();
         mcap_wrapper::write_image_to_all("sample_image", sample_image, current_timestamp);
+        auto t1 = std::chrono::high_resolution_clock::now();
+        std::cout << "Image compression time " << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count() << std::endl;
+        
         pushed_images.push_back(sample_image);
         // Log:
         mcap_wrapper::LOG_LEVEL log_level = mcap_wrapper::LOG_LEVEL(rand()%6);
         std::string log = "This is a log: #" + std::to_string(i);
+        auto t3 = std::chrono::high_resolution_clock::now();
         mcap_wrapper::write_log_to_all("sample_log", current_timestamp, log_level, log, "LOG", "tests/UNIT/src/main.cpp", 42);
+        auto t4 = std::chrono::high_resolution_clock::now();
+
+        std::cout << "Logs compression time " << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count() << std::endl;
+
         pushed_logs.push_back(log);
         // Little sleep
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -55,6 +65,7 @@ int main(int argc, char **argv)
     mcap_wrapper::MCAPReader reader("test.mcap");
     // Verify channel:
     std::map<std::string, mcap_wrapper::MCAPReaderChannelType> all_channel = reader.get_channels();
+    std::cout << "all_channel " << all_channel.size() << std::endl;
     if(all_channel.count("sample_json") == 0){
         std::cerr << "Test failed !" << std::endl << "REASON: \"sample_json\" channel could not be retrieved by reader" << std::endl;
         return 1;
@@ -115,6 +126,8 @@ int main(int argc, char **argv)
         std::cerr << "Test failed !" << std::endl << "Not all data were read" << std::endl;
         return 1;
     }
+
+    std::cout << "All Test succeed ! All good !" << std::endl;
 
     return 0;
 }
