@@ -128,12 +128,21 @@ namespace mcap_wrapper
             std::unique_lock<std::mutex> sleep_until_new_data_ul(sleep_until_new_data_mtx);
             _write_notifier.wait_for(sleep_until_new_data_ul, std::chrono::milliseconds(16));
 
+            // Encode waiting images:
+            encode_waiting_images();
+            prepare_camera_calibration_messages();
+            prepare_raw_message();
+            prepare_log();
+
             // Check ending condition
             if (!_continue_writing && _data_queue.size() == 0) // Check that no data are being waiting to be writted
                 break;
 
             // Take mutex of write is process for inform every sync source that data are currently write:
             std::lock_guard write_is_process(write_is_being_process);
+
+            
+
 
             // Protect `_data_queue` and copy it data
             std::queue<std::pair<foxglove::ChannelId,nlohmann::json>> data_to_write;

@@ -5,8 +5,8 @@
 
 int main(int argc, char **argv){
     // Open MCAP writer:
-    mcap_wrapper::open_file_connexion("simple.mcap");
-    mcap_wrapper::open_network_connexion("127.0.0.1", 5001, "netwoooooerk", "netwwwwookooookokok");
+    mcap_wrapper::open_file_connection("simple.mcap");
+    mcap_wrapper::open_network_connection("127.0.0.1", 5001, "netwoooooerk", "netwwwwookooookokok");
 
     mcap_wrapper::set_connection_to_be_sync("simple.mcap", true);
     mcap_wrapper::set_connection_to_be_sync("netwoooooerk", true);
@@ -36,7 +36,7 @@ int main(int argc, char **argv){
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     // Close file
-    mcap_wrapper::close_file_connexion("simple.mcap");
+    mcap_wrapper::close_file_connection("simple.mcap");
 
     return 0;
 }

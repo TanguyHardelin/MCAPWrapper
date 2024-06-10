@@ -5,7 +5,6 @@
 #include <Eigen/Core>
 #include <opencv2/core.hpp>
 
-
 namespace mcap_wrapper
 {
     /**
@@ -16,10 +15,10 @@ namespace mcap_wrapper
      * @return true could create file
      * @return false could not create file
      */
-    bool open_file_connexion(std::string file_path, std::string reference_name = "");
+    bool open_file_connection(std::string const &file_path, std::string const &reference_name = "");
     /**
-     * @brief Create a network connexion that could be used with foxglove studio.
-     * 
+     * @brief Create a network connection that could be used with foxglove studio.
+     *
      * @param url url where server should be
      * @param port port where server should start
      * @param reference_name name refered to connection for future usage.
@@ -27,40 +26,40 @@ namespace mcap_wrapper
      * @return true could create server
      * @return false could not create server
      */
-    bool open_network_connexion(std::string url, unsigned port, std::string reference_name, std::string server_name="MCAP wrapper");
+    bool open_network_connection(std::string const &url, unsigned port, std::string const &reference_name, std::string const &server_name = "MCAP wrapper");
     /**
      * @brief Close file corresponding to the `file_path`
      *
      * @param reference_name path or reference to the file to close
      */
-    void close_file_connexion(std::string reference_name);
+    void close_file_connection(std::string const &reference_name);
     /**
      * @brief Close network corresponding to `reference_name`
-     * 
+     *
      * @param reference_name server reference name
      */
-    void close_network_connexion(std::string reference_name);
+    void close_network_connection(std::string const &reference_name);
     /**
      * @brief Close all files opened
      *
      */
     void close_all_files();
     /**
-     * @brief Close all network connexion opened
-     * 
+     * @brief Close all network connection opened
+     *
      */
     void close_all_network();
     /**
      * @brief Set connection referenced with `connection_name` to be sync. Sync connection wait the end of it write for return
-     * 
+     *
      * @param connection_name connection to be sync
      * @param sync should the connection must be sync
      * @return true connection found
      * @return false connection not found
      */
-    bool set_connection_to_be_sync(std::string connection_name, bool sync);
+    bool set_connection_to_be_sync(std::string const &connection_name, bool sync);
     /**
-     * @brief Write image into all MCAP connexion. Connexion can be files or live foxglove-studio.
+     * @brief Write image into all MCAP connection. connection can be files or live foxglove-studio.
      *
      * @param identifier identifier to where write the input image
      * @param image cv::Mat representing the image
@@ -68,33 +67,33 @@ namespace mcap_wrapper
      * @return true could write image
      * @return false could not write image
      */
-    bool write_image_to_all(std::string identifier, cv::Mat image, uint64_t timestamp, std::string frame_id = "");
+    bool write_image_to_all(std::string const &identifier, cv::Mat const &image, uint64_t timestamp, std::string const &frame_id = "");
     /**
-     * @brief Write image into to specifics connexions. Connexion muste be refered by it names.
+     * @brief Write image into to specifics connections. connection muste be refered by it names.
      *
-     * @param connexion_identifier list of connexion names where data must be write.
+     * @param connection_identifier list of connection names where data must be write.
      * @param identifier identifier to where write the input image
      * @param image cv::Mat representing the image
      * @param timestamp image's timestamp
      * @return true could write image
      * @return false could not write image
      */
-    bool write_image_to(std::vector<std::string> connexion_identifier, std::string identifier, cv::Mat image, uint64_t timestamp, std::string frame_id = "");
+    bool write_image_to(std::vector<std::string> const &connection_identifier, std::string const &identifier, cv::Mat const &image, uint64_t timestamp, std::string const &frame_id = "");
     /**
-     * @brief Write image into to specifics connexions. Connexion muste be refered by it names.
+     * @brief Write image into to specifics connections. connection muste be refered by it names.
      *
-     * @param connexion_identifier connexion name where data must be write.
+     * @param connection_identifier connection name where data must be write.
      * @param identifier identifier to where write the input image
      * @param image cv::Mat representing the image
      * @param timestamp image's timestamp
      * @return true could write image
      * @return false could not write image
      */
-    bool write_image_to(std::string connexion_identifier, std::string identifier, cv::Mat image, uint64_t timestamp, std::string frame_id = "");
+    bool write_image_to(std::string const &connection_identifier, std::string const &identifier, cv::Mat const &image, uint64_t timestamp, std::string const &frame_id = "");
 
     /**
      * @brief Write camera calibration. It is usefull for plotting image in 3D view and debug stereo programs.
-     * 
+     *
      * @param camera_identifier channel name used in MCAP for this data
      * @param timestamp Timestamp of calibration data
      * @param frame_id Frame of reference for the camera. The origin of the frame is the optical center of the camera. +x points to the right in the image, +y points down, and +z points into the plane of the image.
@@ -108,20 +107,20 @@ namespace mcap_wrapper
      * @return true could write calibration
      * @return false could not write calibration
      */
-    bool write_camera_calibration_all(std::string camera_identifier,
-                                     uint64_t timestamp,
-                                     std::string frame_id,
-                                     unsigned image_width,
-                                     unsigned image_height,
-                                     std::string distortion_model,
-                                     std::array<double, 5> D,
-                                     std::array<double, 9> K,
-                                     std::array<double, 9> R,
-                                     std::array<double, 12> P);
+    bool write_camera_calibration_all(std::string const &camera_identifier,
+                                      uint64_t timestamp,
+                                      std::string const &frame_id,
+                                      unsigned image_width,
+                                      unsigned image_height,
+                                      std::string const &distortion_model,
+                                      std::array<double, 5> const &D,
+                                      std::array<double, 9> const &K,
+                                      std::array<double, 9> const &R,
+                                      std::array<double, 12> const &P);
     /**
      * @brief Write camera calibration. It is usefull for plotting image in 3D view and debug stereo programs.
-     * 
-     * @param connexion_identifier list of connexion names where data must be write.
+     *
+     * @param connection_identifier list of connection names where data must be write.
      * @param camera_identifier channel name used in MCAP for this data
      * @param timestamp Timestamp of calibration data
      * @param frame_id Frame of reference for the camera. The origin of the frame is the optical center of the camera. +x points to the right in the image, +y points down, and +z points into the plane of the image.
@@ -135,21 +134,21 @@ namespace mcap_wrapper
      * @return true could write calibration
      * @return false could not write calibration
      */
-    bool write_camera_calibration_to(std::vector<std::string> connexion_identifier,
-                                     std::string camera_identifier,
+    bool write_camera_calibration_to(std::vector<std::string> const &connection_identifier,
+                                     std::string const &camera_identifier,
                                      uint64_t timestamp,
-                                     std::string frame_id,
+                                     std::string const &frame_id,
                                      unsigned image_width,
                                      unsigned image_height,
-                                     std::string distortion_model,
-                                     std::array<double, 5> D,
-                                     std::array<double, 9> K,
-                                     std::array<double, 9> R,
-                                     std::array<double, 12> P);
+                                     std::string const &distortion_model,
+                                     std::array<double, 5> const &D,
+                                     std::array<double, 9> const &K,
+                                     std::array<double, 9> const &R,
+                                     std::array<double, 12> const &P);
     /**
      * @brief Write camera calibration. It is usefull for plotting image in 3D view and debug stereo programs.
-     * 
-     * @param connexion_identifier connexion name where data must be write.
+     *
+     * @param connection_identifier connection name where data must be write.
      * @param camera_identifier channel name used in MCAP for this data
      * @param timestamp Timestamp of calibration data
      * @param frame_id Frame of reference for the camera. The origin of the frame is the optical center of the camera. +x points to the right in the image, +y points down, and +z points into the plane of the image.
@@ -163,17 +162,17 @@ namespace mcap_wrapper
      * @return true could write calibration
      * @return false could not write calibration
      */
-    bool write_camera_calibration_to(std::string connexion_identifier,
-                                     std::string camera_identifier,
+    bool write_camera_calibration_to(std::string const &connection_identifier,
+                                     std::string const &camera_identifier,
                                      uint64_t timestamp,
-                                     std::string frame_id,
+                                     std::string const &frame_id,
                                      unsigned image_width,
                                      unsigned image_height,
-                                     std::string distortion_model,
-                                     std::array<double, 5> D,
-                                     std::array<double, 9> K,
-                                     std::array<double, 9> R,
-                                     std::array<double, 12> P);
+                                     std::string const &distortion_model,
+                                     std::array<double, 5> const &D,
+                                     std::array<double, 9> const &K,
+                                     std::array<double, 9> const &R,
+                                     std::array<double, 12> const &P);
 
     /**
      * @brief Write JSON into MCAP. Each JSON data "type" must have a property called "__foxglove_name__" in order to be interpretable by
@@ -185,31 +184,31 @@ namespace mcap_wrapper
      * @return true could write JSON
      * @return false could not write JSON
      */
-    bool write_JSON_to_all(std::string identifier, std::string serialized_json, uint64_t timestamp);
+    bool write_JSON_to_all(std::string const &identifier, std::string const &serialized_json, uint64_t timestamp);
     /**
      * @brief Write JSON into MCAP. Each JSON data "type" must have a property called "__foxglove_name__" in order to be interpretable by
      * Foxglove studio as valid data. This function is thread safe.
      *
-     * @param connexion_identifier list of connexion names where data must be write.
+     * @param connection_identifier list of connection names where data must be write.
      * @param identifier identifier to where write the JSON
      * @param serialized_json JSON serialized into string
      * @param timestamp timestamp of JSON
      * @return true could write JSON
      * @return false could not write JSON
      */
-    bool write_JSON_to(std::vector<std::string> connexion_identifier, std::string identifier, std::string serialized_json, uint64_t timestamp);
+    bool write_JSON_to(std::vector<std::string> const &connection_identifier, std::string const &identifier, std::string const &serialized_json, uint64_t timestamp);
     /**
      * @brief Write JSON into MCAP. Each JSON data "type" must have a property called "__foxglove_name__" in order to be interpretable by
      * Foxglove studio as valid data. This function is thread safe.
      *
-     * @param connexion_identifier connexion name where data must be write.
+     * @param connection_identifier connection name where data must be write.
      * @param identifier identifier to where write the JSON
      * @param serialized_json JSON serialized into string
      * @param timestamp timestamp of JSON
      * @return true could write JSON
      * @return false could not write JSON
      */
-    bool write_JSON_to(std::string connexion_identifier, std::string identifier, std::string serialized_json, uint64_t timestamp);
+    bool write_JSON_to(std::string const &connection_identifier, std::string const &identifier, std::string const &serialized_json, uint64_t timestamp);
 
     /**
      * @brief Add frame transform that could be used for 3D and image
@@ -224,25 +223,25 @@ namespace mcap_wrapper
     /**
      * @brief Add frame transform that could be used for 3D and image
      *
-     * @param connexion_identifier list of connexion names where data must be write.
+     * @param connection_identifier list of connection names where data must be write.
      * @param transform_name Name of the transform
      * @param timestamp Timestamp of transform
      * @param parent Name of the parent frame
      * @param child Name of the child frame
      * @param pose Transform position
      */
-    bool add_frame_transform_to(std::vector<std::string> connexion_identifier, std::string transform_name, uint64_t timestamp, std::string parent, std::string child, Eigen::Matrix4f pose);
+    bool add_frame_transform_to(std::vector<std::string> connection_identifier, std::string transform_name, uint64_t timestamp, std::string parent, std::string child, Eigen::Matrix4f pose);
     /**
      * @brief Add frame transform that could be used for 3D and image
      *
-     * @param connexion_identifier connexion name where data must be write.
+     * @param connection_identifier connection name where data must be write.
      * @param transform_name Name of the transform
      * @param timestamp Timestamp of transform
      * @param parent Name of the parent frame
      * @param child Name of the child frame
      * @param pose Transform position
      */
-    bool add_frame_transform_to(std::string connexion_identifier, std::string transform_name, uint64_t timestamp, std::string parent, std::string child, Eigen::Matrix4f pose);
+    bool add_frame_transform_to(std::string connection_identifier, std::string transform_name, uint64_t timestamp, std::string parent, std::string child, Eigen::Matrix4f pose);
 
     /**
      * @brief Create a 3D object that can own some primitives like triangle, rectangle, etc...
@@ -399,23 +398,23 @@ namespace mcap_wrapper
     /**
      * @brief Write 3D object into the file
      *
-     * @param connexion_identifier list of connexion names where data must be write.
+     * @param connection_identifier list of connection names where data must be write.
      * @param object_name Name of the object to push
      * @param timestamp Timestamp in which the object will be pushed
      * @return true Everything does fines.
      * @return false Everything does wrong.
      */
-    bool write_3d_object_to(std::vector<std::string> connexion_identifier, std::string object_name, uint64_t timestamp);
+    bool write_3d_object_to(std::vector<std::string> connection_identifier, std::string object_name, uint64_t timestamp);
     /**
      * @brief Write 3D object into the file
      *
-     * @param connexion_identifier connexion name where data must be write.
+     * @param connection_identifier connection name where data must be write.
      * @param object_name Name of the object to push
      * @param timestamp Timestamp in which the object will be pushed
      * @return true Everything does fines.
      * @return false Everything does wrong.
      */
-    bool write_3d_object_to(std::string connexion_identifier, std::string object_name, uint64_t timestamp);
+    bool write_3d_object_to(std::string connection_identifier, std::string object_name, uint64_t timestamp);
 
     /**
      * @brief Used by write_log_to_all. Specify the level of log
@@ -441,11 +440,11 @@ namespace mcap_wrapper
      * @param file Filename
      * @param line Line number in the file
      */
-    bool write_log_to_all(std::string log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string message, std::string name, std::string file, uint32_t line);
+    bool write_log_to_all(std::string const &log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string const &message, std::string const &name, std::string const &file, uint32_t line);
     /**
      * @brief Add log
      *
-     * @param connexion_identifier list of connexion names where data must be write.
+     * @param connection_identifier list of connection names where data must be write.
      * @param log_channel_name Name of channel that must be used for pushing logs
      * @param timestamp Timestamp of log message
      * @param log_level Log level
@@ -454,11 +453,11 @@ namespace mcap_wrapper
      * @param file Filename
      * @param line Line number in the file
      */
-    bool write_log_to(std::vector<std::string> connexion_identifier, std::string log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string message, std::string name, std::string file, uint32_t line);
+    bool write_log_to(std::vector<std::string> const &connection_identifier, std::string const &log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string const &message, std::string const &name, std::string const &file, uint32_t line);
     /**
      * @brief Add log
      *
-     * @param connexion_identifier connexion name where data must be write.
+     * @param connection_identifier connection name where data must be write.
      * @param log_channel_name Name of channel that must be used for pushing logs
      * @param timestamp Timestamp of log message
      * @param log_level Log level
@@ -467,7 +466,7 @@ namespace mcap_wrapper
      * @param file Filename
      * @param line Line number in the file
      */
-    bool write_log_to(std::string connexion_identifier, std::string log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string message, std::string name, std::string file, uint32_t line);
+    bool write_log_to(std::string const &connection_identifier, std::string const &log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string const &message, std::string const &name, std::string const &file, uint32_t line);
 
     /**
      * @brief Add position that could be vizualized into 3D. Position could be linked to frame thanks to the `frame_id` parameter.
@@ -483,7 +482,7 @@ namespace mcap_wrapper
     /**
      * @brief Add position that could be vizualized into 3D. Position could be linked to frame thanks to the `frame_id` parameter.
      *
-     * @param connexion_identifier list of connexion names where data must be write.
+     * @param connection_identifier list of connection names where data must be write.
      * @param position_channel_name Name of position
      * @param timestamp Timestamp of pose
      * @param pose Pose in 3D space
@@ -491,18 +490,18 @@ namespace mcap_wrapper
      * @return true  Everything does fines.
      * @return false Everything does wrong.
      */
-    bool add_position_to(std::vector<std::string> connexion_identifier, std::string position_channel_name, uint64_t timestamp, Eigen::Matrix4f pose, std::string frame_id = "");
+    bool add_position_to(std::vector<std::string> connection_identifier, std::string position_channel_name, uint64_t timestamp, Eigen::Matrix4f pose, std::string frame_id = "");
     /**
      * @brief Add position that could be vizualized into 3D. Position could be linked to frame thanks to the `frame_id` parameter.
      *
-     * @param connexion_identifier connexion name where data must be write.
+     * @param connection_identifier connection name where data must be write.
      * @param timestamp Timestamp of pose
      * @param pose Pose in 3D space
      * @param frame_id Frame of reference for pose position and orientation
      * @return true  Everything does fines.
      * @return false Everything does wrong.
      */
-    bool add_position_to(std::string connexion_identifier, std::string position_channel_name, uint64_t timestamp, Eigen::Matrix4f pose, std::string frame_id = "");
+    bool add_position_to(std::string connection_identifier, std::string position_channel_name, uint64_t timestamp, Eigen::Matrix4f pose, std::string frame_id = "");
 };
 
 #endif

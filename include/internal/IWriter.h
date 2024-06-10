@@ -9,6 +9,10 @@
 #include <condition_variable>
 #include <map>
 #include <Eigen/Core>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include "internal/Base64.hpp"
 #include "mcap/writer.hpp"
 #include "json.hpp"
 #include "Internal3DObject.h"
@@ -94,12 +98,12 @@ namespace mcap_wrapper
          * @return false The primitive was not added (error occur)
          */
         virtual bool add_arrow_to_3d_object(std::string object_name,
-                                    Eigen::Matrix4f pose,
-                                    double shaft_length,
-                                    double shaft_diameter,
-                                    double head_length,
-                                    double head_diameter,
-                                    std::array<double, 4> color = {0, 0, 0, 1});
+                                            Eigen::Matrix4f pose,
+                                            double shaft_length,
+                                            double shaft_diameter,
+                                            double head_length,
+                                            double head_diameter,
+                                            std::array<double, 4> color = {0, 0, 0, 1});
         /**
          * @brief Add cube to 3D object
          *
@@ -111,9 +115,9 @@ namespace mcap_wrapper
          * @return false The primitive was not added (error occur)
          */
         virtual bool add_cube_to_3d_object(std::string object_name,
-                                   Eigen::Matrix4f pose,
-                                   std::array<double, 3> size,
-                                   std::array<double, 4> color = {0, 0, 0, 1});
+                                           Eigen::Matrix4f pose,
+                                           std::array<double, 3> size,
+                                           std::array<double, 4> color = {0, 0, 0, 1});
         /**
          * @brief Add sphere to 3D object
          *
@@ -125,9 +129,9 @@ namespace mcap_wrapper
          * @return false The primitive was not added (error occur)
          */
         virtual bool add_sphere_to_3d_object(std::string object_name,
-                                     Eigen::Matrix4f pose,
-                                     std::array<double, 3> size,
-                                     std::array<double, 4> color = {0, 0, 0, 1});
+                                             Eigen::Matrix4f pose,
+                                             std::array<double, 3> size,
+                                             std::array<double, 4> color = {0, 0, 0, 1});
         /**
          * @brief Add cylinder to the 3D object
          *
@@ -141,11 +145,11 @@ namespace mcap_wrapper
          * @return false The primitive was not added (error occur)
          */
         virtual bool add_cylinder_to_3d_object(std::string object_name,
-                                       Eigen::Matrix4f pose,
-                                       double bottom_scale,
-                                       double top_scale,
-                                       std::array<double, 3> size,
-                                       std::array<double, 4> color = {0, 0, 0, 1});
+                                               Eigen::Matrix4f pose,
+                                               double bottom_scale,
+                                               double top_scale,
+                                               std::array<double, 3> size,
+                                               std::array<double, 4> color = {0, 0, 0, 1});
         /**
          * @brief Add line to 3D object
          *
@@ -161,13 +165,13 @@ namespace mcap_wrapper
          * @return false The primitive was not added (error occur)
          */
         virtual bool add_line_to_3d_object(std::string object_name,
-                                   Eigen::Matrix4f pose,
-                                   double thickness,
-                                   bool scale_invariant,
-                                   std::vector<Eigen::Vector3d> points,
-                                   std::array<double, 4> color,
-                                   std::vector<std::array<double, 4>> colors,
-                                   std::vector<uint32_t> indices);
+                                           Eigen::Matrix4f pose,
+                                           double thickness,
+                                           bool scale_invariant,
+                                           std::vector<Eigen::Vector3d> points,
+                                           std::array<double, 4> color,
+                                           std::vector<std::array<double, 4>> colors,
+                                           std::vector<uint32_t> indices);
         /**
          * @brief Add triangle to 3D object
          *
@@ -181,11 +185,11 @@ namespace mcap_wrapper
          * @return false The primitive was not added (error occur)
          */
         virtual bool add_triangle_to_3d_object(std::string object_name,
-                                       Eigen::Matrix4f pose,
-                                       std::vector<Eigen::Vector3d> points,
-                                       std::array<double, 4> color,
-                                       std::vector<std::array<double, 4>> colors,
-                                       std::vector<uint32_t> indices);
+                                               Eigen::Matrix4f pose,
+                                               std::vector<Eigen::Vector3d> points,
+                                               std::array<double, 4> color,
+                                               std::vector<std::array<double, 4>> colors,
+                                               std::vector<uint32_t> indices);
         /**
          * @brief Add text to 3D object
          *
@@ -200,12 +204,12 @@ namespace mcap_wrapper
          * @return false The primitive was not added (error occur)
          */
         virtual bool add_text_to_3d_object(std::string object_name,
-                                   Eigen::Matrix4f pose,
-                                   bool billboard,
-                                   double font_size,
-                                   bool scale_invariant,
-                                   std::array<double, 4> color,
-                                   std::string text);
+                                           Eigen::Matrix4f pose,
+                                           bool billboard,
+                                           double font_size,
+                                           bool scale_invariant,
+                                           std::array<double, 4> color,
+                                           std::string text);
         /**
          * @brief Write 3D object into the file
          *
@@ -227,21 +231,86 @@ namespace mcap_wrapper
          */
         virtual bool add_position_to_all(std::string position_channel_name, uint64_t timestamp, Eigen::Matrix4f pose, std::string frame_id);
 
-
         /**
          * @brief Set the sync mode. In sync mode every write must wait it end to return
-         * 
+         *
          * @param sync Is suposed to be sync
          */
         virtual void set_sync(bool sync);
 
+        // For pushing function zeros runtime:
+        void write_image(std::string const &identifier, cv::Mat const &image, uint64_t timestamp, std::string const &frame_id = "");
+        void write_camera_calibration(std::string const & camera_identifier,
+                                     uint64_t timestamp,
+                                     std::string const & frame_id,
+                                     unsigned image_width,
+                                     unsigned image_height,
+                                     std::string const & distortion_model,
+                                     std::array<double, 5> const & D,
+                                     std::array<double, 9> const & K,
+                                     std::array<double, 9> const & R,
+                                     std::array<double, 12> const & P);
+        void write_raw_message(std::string const & identifier, std::string const & serialized_message, uint64_t timestamp);
+        void write_log(std::string const &log_channel_name, uint64_t timestamp, int log_level, std::string const &message, std::string const &name, std::string const &file, uint32_t line);
+
     protected:
+        void encode_waiting_images(); // Encode image into mcap message
+        void prepare_camera_calibration_messages(); 
+        void prepare_raw_message();
+        void prepare_log();
 
         // Attributes:
         std::map<std::string, mcap::Channel> _all_channels;                 // All channels schema
         std::map<std::string, Internal3DObject> _all_3d_object;             // Definition of all 3D objects.
         std::map<std::string, std::vector<Eigen::Matrix4f>> _all_positions; // Keep track of all positions for a dedicated channel
         bool is_write_sync = false;                                         // Attribute that is used for knowing if write should be sync
+
+        // For async issue:
+        typedef struct ImageWaitingToBeEncoded
+        {
+            std::string identifier;
+            cv::Mat image;
+            uint64_t timestamp;
+            std::string frame_id;
+        } ImageWaitingToBeEncoded;
+        std::vector<ImageWaitingToBeEncoded> _image_waiting_to_be_encoded;
+        std::mutex _image_waiting_to_be_encoded_mtx;
+
+        typedef struct CameraCalibration
+        {
+            std::string camera_identifier;
+            uint64_t timestamp;
+            std::string frame_id;
+            unsigned image_width;
+            unsigned image_height;
+            std::string distortion_model;
+            std::array<double, 5> D;
+            std::array<double, 9> K;
+            std::array<double, 9> R;
+            std::array<double, 12> P;
+        } CameraCalibration;
+        std::vector<CameraCalibration> _camera_calibration_waiting_to_be_encoded;
+        std::mutex _camera_calibration_waiting_to_be_encoded_mtx;
+
+        typedef struct RawMessage{
+            std::string identifier;
+            std::string serialized_message;
+            uint64_t timestamp;
+        } RawMessage;
+        std::vector<RawMessage> _raw_message_waiting_to_be_encoded;
+        std::mutex _raw_message_waiting_to_be_encoded_mtx;
+
+        typedef struct Log{
+            std::string identifier;
+            uint64_t timestamp;
+            int log_level;
+            std::string message;
+            std::string name;
+            std::string file;
+            uint32_t line;
+        } Log;
+        std::vector<Log> _log_waiting_to_be_encoded;
+        std::mutex _log_waiting_to_be_encoded_mtx;
     };
 
 };

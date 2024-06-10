@@ -5,8 +5,8 @@
 
 int main(int argc, char **argv){
     // Open MCAP writer:
-    mcap_wrapper::open_file_connexion("simple.mcap");
-    mcap_wrapper::open_network_connexion("0.0.0.0", 8765, "simple_server");
+    mcap_wrapper::open_file_connection("simple.mcap");
+    mcap_wrapper::open_network_connection("0.0.0.0", 8765, "simple_server");
 
     // Add transform:
     mcap_wrapper::add_frame_transform_to_all("root", std::chrono::system_clock::now().time_since_epoch().count(), "root", "", Eigen::Matrix4f::Identity());
@@ -56,7 +56,7 @@ int main(int argc, char **argv){
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     // Close file
-    mcap_wrapper::close_file_connexion("simple.mcap");
+    mcap_wrapper::close_file_connection("simple.mcap");
 
     return 0;
 }

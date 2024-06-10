@@ -80,9 +80,11 @@ namespace mcap_wrapper
         _write_notifier.notify_all();
 
         // If we are in sync mode we wait that data was wrote
-        std::mutex mtx;
-        std::unique_lock ul(mtx);
-        write_finished_adviser.wait_for(ul, std::chrono::seconds(1)); // 1 second of timeout to avoid blocking
+        if(is_write_sync){
+            std::mutex mtx;
+            std::unique_lock ul(mtx);
+            write_finished_adviser.wait_for(ul, std::chrono::seconds(1)); // 1 second of timeout to avoid blocking
+        }
     }
 
     //
@@ -96,13 +98,19 @@ namespace mcap_wrapper
             std::unique_lock<std::mutex> sleep_until_new_data_ul(sleep_until_new_data_mtx);
             _write_notifier.wait_for(sleep_until_new_data_ul, std::chrono::milliseconds(16));
 
+            // Encode waiting images:
+            encode_waiting_images();
+            prepare_camera_calibration_messages();
+            prepare_raw_message();
+            prepare_log();
+            
             // Check ending condition
             if (!_continue_writing && _data_queue.size() == 0) // Check that no data are being waiting to be writted
                 break;
 
             // Take mutex of write is process for inform every sync source that data are currently write:
             std::lock_guard write_is_process(write_is_being_process);
-
+            
             // Protect `_data_queue` and copy it data
             std::queue<mcap::Message> data_to_write;
             {

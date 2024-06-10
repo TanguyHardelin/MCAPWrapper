@@ -27,7 +27,7 @@ Some example are provided in the [example folder](https://github.com/TanguyHarde
 
 int main(int argc, char **argv){
     // Open MCAP writer:
-    mcap_wrapper::open_file_connexion("toto.mcap");
+    mcap_wrapper::open_file_connection("toto.mcap");
     // Write data into file:
     for(unsigned i=0; i<20; i++){
         // Create data
@@ -47,7 +47,7 @@ int main(int argc, char **argv){
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     // Close file
-    mcap_wrapper::close_file_connexion("toto.mcap");
+    mcap_wrapper::close_file_connection("toto.mcap");
 
     return 0;
 }
@@ -60,3 +60,4 @@ Other examples are available in [examples folder](https://github.com/TanguyHarde
 - Test on compression runtime
 - Test on sync
 - Async compression
+- Add gtest
