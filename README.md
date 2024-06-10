@@ -57,7 +57,5 @@ Other examples are available in [examples folder](https://github.com/TanguyHarde
 
 
 # TODO
-- Test on compression runtime
-- Test on sync
-- Async compression
-- Add gtest
+- Write async write for all data type
+- Use GTest in UNIT_TEST
