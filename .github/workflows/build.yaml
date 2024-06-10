@@ -16,6 +16,13 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v4
         with: 
+          name: mcap-wrapper-build
+          path: |
+              lib
+              include
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with: 
           name: mcap-wrapper-installer
           path: .ci/install_dependencies/install_mcap_wrapper
   test:
@@ -27,7 +34,7 @@ jobs:
       - name: Download build
         uses: actions/download-artifact@v4
         with:
-          name: mcap-wrapper-installer
+          name: mcap-wrapper-build
       - name: Install
         run: chmod +x ./install_mcap_wrapper && ./install_mcap_wrapper
       - name: UNIT test
