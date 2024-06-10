@@ -35,8 +35,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: mcap-wrapper-build
-      - name: Install
-        run: chmod +x ./install_mcap_wrapper && ./install_mcap_wrapper
       - name: UNIT test
         run: cd tests && chmod +x run.sh && ./run.sh
 
