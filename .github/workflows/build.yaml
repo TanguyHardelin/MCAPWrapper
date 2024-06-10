@@ -38,7 +38,14 @@ jobs:
         with:
           name: mcap-wrapper-build
       - name: Install
-        run: cd build && make build
+        run: cd build && make install
       - name: UNIT test
         run: cd tests && chmod +x run.sh && ./run.sh
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    container: tanguyhardelin/ubuntu-with-opencv:22.04
+    steps:
+      - name: Upload installer
+        run: echo "TODO"
 
