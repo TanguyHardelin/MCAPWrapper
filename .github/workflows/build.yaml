@@ -33,6 +33,9 @@ jobs:
     container: tanguyhardelin/ubuntu-with-opencv:22.04
     steps:
       - uses: actions/checkout@v4
+      - name: checkoutLFS
+          uses: actions/checkout@v4
+        - run: git lfs pull
       - name: Download build
         uses: actions/download-artifact@v4
         with:
