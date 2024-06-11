@@ -36,7 +36,6 @@ jobs:
       - name: Add repository
         run: git config --global --add safe.directory /__w/MCAPWrapper/MCAPWrapper
       - name: checkoutLFS
-        uses: actions/checkout@v4
         run: git lfs pull
       - name: Directory
         run: pwd
