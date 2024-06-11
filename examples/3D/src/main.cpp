@@ -12,7 +12,7 @@ int main(int argc, char **argv){
     mcap_wrapper::add_frame_transform_to_all("root", std::chrono::system_clock::now().time_since_epoch().count(), "root", "", Eigen::Matrix4f::Identity());
 
     // Write data into file:
-    for(unsigned i=0; ; i++){
+    for(unsigned i=0; i < 20; i++){
         unsigned position = i % 20;
         // Create cube:
         Eigen::Matrix4f cube_position = Eigen::Matrix4f::Identity();

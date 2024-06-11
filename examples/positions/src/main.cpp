@@ -32,7 +32,7 @@ int main(int argc, char **argv)
         mcap_wrapper::add_frame_transform_to_all("root", std::chrono::system_clock::now().time_since_epoch().count(), "map", "root", Eigen::Matrix4f::Identity());
 
     // Write data into file:
-    for (unsigned i = 0; ; i++)
+    for (unsigned i = 0; i < 20; i++)
     {
         // Since network do not start right away we need to push this every time to be sure that it is received
         mcap_wrapper::write_camera_calibration_all("simpleCamera",
