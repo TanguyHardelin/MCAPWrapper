@@ -34,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: checkoutLFS
-        run: git lfs pull
+        run: apt install git-lfs && git lfs pull
       - name: Directory
         run: pwd
       - name: list directory
