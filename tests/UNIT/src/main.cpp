@@ -18,7 +18,12 @@ int main(int argc, char **argv)
     // Open reference image:
     std::string reference_image_path = RESSOURCE_PATH; // `RESSOURCE_PATH` is defined in cmake
     reference_image_path += "/sample_image.jpg";
+    std::cout << "reference_image_path " << reference_image_path << std::endl;
     cv::Mat reference_image = cv::imread(reference_image_path);
+    if(reference_image.empty()){ 
+        std::cerr << "Could not load image" << std::endl;
+        return 1;
+    }
 
     // Define reference vector that will be used as reference
     std::vector<nlohmann::json> pushed_json_values;
