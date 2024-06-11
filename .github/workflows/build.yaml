@@ -37,10 +37,6 @@ jobs:
         run: git config --global --add safe.directory /__w/MCAPWrapper/MCAPWrapper
       - name: checkoutLFS
         run: git lfs pull
-      - name: Directory
-        run: pwd
-      - name: list directory
-        run: ls
       - name: Download build
         uses: actions/download-artifact@v4
         with:

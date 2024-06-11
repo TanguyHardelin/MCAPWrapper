@@ -49,16 +49,12 @@ int main(int argc, char **argv)
 
         pushed_json_values.push_back(sample_json);
         // Image:
-        std::cout << "Will push image" << std::endl;
         cv::Mat sample_image = reference_image.clone();
         int kernel_size = std::max(3, rand()%7);
-        std::cout << "Will blur image" << std::endl;
         cv::blur(sample_image, sample_image, cv::Size(kernel_size, kernel_size));
-        std::cout << "End blur image" << std::endl;
         auto image_t0 = std::chrono::high_resolution_clock::now();
         mcap_wrapper::write_image_to_all("sample_image", sample_image, current_timestamp);
         auto image_t1 = std::chrono::high_resolution_clock::now();
-        std::cout << "Image pushed" << std::endl;
         mean_push_image_runtime.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(image_t1 - image_t0).count());
         
         pushed_images.push_back(sample_image);
@@ -109,13 +105,11 @@ int main(int argc, char **argv)
     // Verify content:
     cv::Mat image;
     while(reader.get_next_image("sample_image", image)){
-        std::cout << "Will compute PSNR" << std::endl;
         if(calculatePSNR(image, pushed_images[0]) < 45){
             // The image is only little compressed in JPEG so 40 PSNR value seems ok
             std::cerr << "Test failed !" << std::endl << "REASON: retrieved image is not the same" << std::endl;
             return 1;
         }
-        std::cout << "PSNR computed" << std::endl;
         pushed_images.erase(pushed_images.begin());
     }
 
