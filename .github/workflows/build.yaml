@@ -38,7 +38,7 @@ jobs:
         with:
           name: mcap-wrapper-build
       - name: Install
-        run: cd build && make install
+        run: cd build && make install && cd ..
       - name: UNIT test
         run: cd tests && chmod +x run.sh && ./run.sh
   release:
