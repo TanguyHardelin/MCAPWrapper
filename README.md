@@ -1,4 +1,8 @@
 # MCAPWrapper
+
+> [!WARNING]  
+> Since its public release, this repository is licensed under GPL 3. This means that you are free to use and distribute this code, but you are obligated to distribute any modifications you make to it.
+
 According to [foxglove](https://foxglove.dev) MCAP is a standardized container format for storing heterogeneous robotics data. It allow unified data format for recording robotics data and allow futher debug. By combining it with [foxglove-studio](https://foxglove.dev/download) it provide a powerfull tool for visualize and debug robotics projects.
 
 This project aim to provide a wrapper for writing MCAP in a simplified way. With this project it should be possible to write MCAP and use foxglove in minutes instead of hours.
