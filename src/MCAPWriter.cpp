@@ -467,7 +467,7 @@ namespace mcap_wrapper
         return true;
     }
 
-    void add_image_annotation_to_all(std::vector<CircleAnnotation> const &circle_annotations, std::string const& channel_name, std::vector<PointsAnnotation> const &points_annotations, std::vector<TextAnnotation> const &text_annotations, uint64_t timestamp)
+    void add_image_annotation_to_all(std::string const& channel_name, std::vector<CircleAnnotation> const &circle_annotations, std::vector<PointsAnnotation> const &points_annotations, std::vector<TextAnnotation> const &text_annotations, uint64_t timestamp)
     {
         for (auto &kv : all_writers)
         {
@@ -531,7 +531,7 @@ namespace mcap_wrapper
                 nlohmann::json position_json;
                 position_json["x"] = point_position[0];
                 position_json["y"] = point_position[1];
-                point_json["positions"].push_back(position_json);
+                point_json["points"].push_back(position_json);
             }
             point_json["outline_color"] = nlohmann::json();
             point_json["outline_color"]["r"] = point.outline_color[0];
