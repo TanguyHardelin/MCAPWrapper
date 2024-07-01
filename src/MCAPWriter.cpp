@@ -399,7 +399,7 @@ namespace mcap_wrapper
         return true;
     }
 
-    bool write_log_to_all(std::string const& log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string const& message, std::string const& name, std::string const& file, uint32_t line)
+    bool write_log_to_all(std::string const &log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string const &message, std::string const &name, std::string const &file, uint32_t line)
     {
         bool out = true;
         for (auto &kv : all_writers)
@@ -409,7 +409,7 @@ namespace mcap_wrapper
         return out;
     }
 
-    bool write_log_to_all(std::vector<std::string> const& connection_identifier, std::string const& log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string const& message, std::string const& name, std::string const& file, uint32_t line)
+    bool write_log_to_all(std::vector<std::string> const &connection_identifier, std::string const &log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string const &message, std::string const &name, std::string const &file, uint32_t line)
     {
         bool out = true;
         for (auto id : connection_identifier)
@@ -419,7 +419,7 @@ namespace mcap_wrapper
         return out;
     }
 
-    bool write_log_to(std::string const& connection_identifier, std::string const& log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string const& message, std::string const& name, std::string const& file, uint32_t line)
+    bool write_log_to(std::string const &connection_identifier, std::string const &log_channel_name, uint64_t timestamp, LOG_LEVEL log_level, std::string const &message, std::string const &name, std::string const &file, uint32_t line)
     {
         unsigned number_of_connection_presents = get_number_of_connection_presents_for_identifier(connection_identifier);
         if (number_of_connection_presents == 0)
@@ -465,5 +465,120 @@ namespace mcap_wrapper
         all_writers[connection_identifier]->add_position_to_all(position_channel_name, timestamp, pose, frame_id);
 
         return true;
+    }
+
+    void add_image_annotation_to_all(std::string const& channel_name, std::vector<CircleAnnotation> const &circle_annotations, std::vector<PointsAnnotation> const &points_annotations, std::vector<TextAnnotation> const &text_annotations, uint64_t timestamp)
+    {
+        for (auto &kv : all_writers)
+        {
+           add_image_annotation_to(kv.first, channel_name,  circle_annotations, points_annotations, text_annotations, timestamp);
+        }
+    }
+    void add_image_annotation_to(std::vector<std::string> const &connection_identifier, std::string const& channel_name, std::vector<CircleAnnotation> const &circle_annotations, std::vector<PointsAnnotation> const &points_annotations, std::vector<TextAnnotation> const &text_annotations, uint64_t timestamp)
+    {
+        for (auto id : connection_identifier)
+        {
+           add_image_annotation_to(id, channel_name,  circle_annotations, points_annotations, text_annotations, timestamp);
+        }
+    }
+    void add_image_annotation_to(std::string const &connection_identifier, std::string const& channel_name, std::vector<CircleAnnotation> const &circle_annotations, std::vector<PointsAnnotation> const &points_annotations, std::vector<TextAnnotation> const &text_annotations, uint64_t timestamp)
+    {
+        unsigned number_of_connection_presents = get_number_of_connection_presents_for_identifier(connection_identifier);
+        if (number_of_connection_presents == 0)
+            return ;
+
+        // Create schema if not present:
+        if (!all_writers[connection_identifier]->is_schema_present(channel_name))
+        {
+            nlohmann::json schema_unserialized = nlohmann::json::parse(get_image_annotation_schema());
+            all_writers[connection_identifier]->create_schema(channel_name, schema_unserialized);
+        }
+
+        nlohmann::json image_annotation;
+        image_annotation["circles"] = std::vector<nlohmann::json>();
+        for(auto circle : circle_annotations)
+        {
+            nlohmann::json circle_json;
+            circle_json["timestamp"] = nlohmann::json();
+            circle_json["timestamp"]["sec"] = (uint64_t)circle.timestamp / (uint64_t)1e9;
+            circle_json["timestamp"]["nsec"] = (uint64_t)circle.timestamp % (uint64_t)1e9;
+            circle_json["position"] = nlohmann::json();
+            circle_json["position"]["x"] = circle.position[0];
+            circle_json["position"]["y"] = circle.position[1];
+            circle_json["diameter"] = circle.diameter;
+            circle_json["thickness"] = circle.thickness;
+            circle_json["fill_color"]["r"] = circle.fill_color[0];
+            circle_json["fill_color"]["g"] = circle.fill_color[1];
+            circle_json["fill_color"]["b"] = circle.fill_color[2];
+            circle_json["fill_color"]["a"] = circle.fill_color[3];
+            circle_json["outline_color"] = nlohmann::json();
+            circle_json["outline_color"]["r"] = circle.outline_color[0];
+            circle_json["outline_color"]["g"] = circle.outline_color[1];
+            circle_json["outline_color"]["b"] = circle.outline_color[2];
+            circle_json["outline_color"]["a"] = circle.outline_color[3];
+            image_annotation["circles"].push_back(circle_json);
+        }
+        image_annotation["points"] = std::vector<nlohmann::json>();
+        for(auto point: points_annotations)
+        {
+            nlohmann::json point_json;
+            point_json["timestamp"] = nlohmann::json();
+            point_json["timestamp"]["sec"] = (uint64_t)point.timestamp / (uint64_t)1e9;
+            point_json["timestamp"]["nsec"] = (uint64_t)point.timestamp % (uint64_t)1e9;
+            point_json["type"] = (int)point.type;
+            for(auto point_position: point.points)
+            {
+                nlohmann::json position_json;
+                position_json["x"] = point_position[0];
+                position_json["y"] = point_position[1];
+                point_json["points"].push_back(position_json);
+            }
+            point_json["outline_color"] = nlohmann::json();
+            point_json["outline_color"]["r"] = point.outline_color[0];
+            point_json["outline_color"]["g"] = point.outline_color[1];
+            point_json["outline_color"]["b"] = point.outline_color[2];
+            point_json["outline_color"]["a"] = point.outline_color[3];
+            point_json["outline_colors"] = std::vector<nlohmann::json>();
+            for(auto outline_color: point.outline_colors)
+            {
+                nlohmann::json outline_color_json;
+                outline_color_json["r"] = outline_color[0];
+                outline_color_json["g"] = outline_color[1];
+                outline_color_json["b"] = outline_color[2];
+                outline_color_json["a"] = outline_color[3];
+                point_json["outline_colors"].push_back(outline_color_json);
+            }
+            point_json["fill_color"]["r"] = point.fill_color[0];
+            point_json["fill_color"]["g"] = point.fill_color[1];
+            point_json["fill_color"]["b"] = point.fill_color[2];
+            point_json["fill_color"]["a"] = point.fill_color[3];
+            point_json["thickness"] = point.thickness;
+            image_annotation["points"].push_back(point_json);
+        }
+        image_annotation["texts"] = std::vector<nlohmann::json>();
+        for(auto text: text_annotations)
+        {
+            nlohmann::json text_json;
+            text_json["timestamp"] = nlohmann::json();
+            text_json["timestamp"]["sec"] = (uint64_t)text.timestamp / (uint64_t)1e9;
+            text_json["timestamp"]["nsec"] = (uint64_t)text.timestamp % (uint64_t)1e9;
+            text_json["position"] = nlohmann::json();
+            text_json["position"]["x"] = text.position[0];
+            text_json["position"]["y"] = text.position[1];
+            text_json["text"] = text.text;
+            text_json["font_size"] = text.font_size;
+            text_json["text_color"] = nlohmann::json();
+            text_json["text_color"]["r"] = text.text_color[0];
+            text_json["text_color"]["g"] = text.text_color[1];
+            text_json["text_color"]["b"] = text.text_color[2];
+            text_json["text_color"]["a"] = text.text_color[3];
+            text_json["background_color"] = nlohmann::json();
+            text_json["background_color"]["r"] = text.background_color[0];
+            text_json["background_color"]["g"] = text.background_color[1];
+            text_json["background_color"]["b"] = text.background_color[2];
+            text_json["background_color"]["a"] = text.background_color[3];
+            image_annotation["texts"].push_back(text_json);
+        }
+        write_JSON_to(connection_identifier, channel_name, image_annotation.dump(), timestamp);
     }
 };

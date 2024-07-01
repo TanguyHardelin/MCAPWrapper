@@ -332,7 +332,7 @@ namespace mcap_wrapper
      * @param object_name Name of associated 3D object
      * @param pose Position of the cylinder in the space
      * @param thickness Thickness of the line
-     * @param scale_invariant Is the thickness must be specified in pixel and be fixed (true) or being scale relative to distance to the camera (false)
+     * @param scale_invariant Is the thickness must be specified in pixel and be fixed (true) orbeing scale relative to distance to the camera (false)
      * @param points Points constituting the line
      * @param color Color of the whole line
      * @param colors Per point color. Erase the `color` definition. The size of `colors` must correspond to the size of `points`
@@ -502,6 +502,92 @@ namespace mcap_wrapper
      * @return false Everything does wrong.
      */
     bool add_position_to(std::string connection_identifier, std::string position_channel_name, uint64_t timestamp, Eigen::Matrix4f pose, std::string frame_id = "");
+
+    /**
+     * @brief Describe a circle annotation
+     * 
+     */
+    typedef struct CircleAnnotation{
+        uint64_t timestamp;
+        std::array<int, 2> position;
+        double diameter;
+        double thickness;
+        std::array<double, 4> fill_color;
+        std::array<double, 4> outline_color;
+    } CircleAnnotation;
+
+    /**
+     * @brief Describe point annotation type
+     * 
+     */
+    enum class PointAnnotationType{
+        UNKNOWN = 0,
+        POINTS = 1,
+        LINE_LOOP = 2,
+        LINE_STRIP = 3,
+        LINE_LIST = 4
+    };
+
+    /**
+     * @brief Describe points annotations
+     * 
+     */
+    typedef struct PointsAnnotation{
+        uint64_t timestamp;
+        PointAnnotationType type;
+        std::vector<std::array<int, 2>> points;
+        std::array<double, 4> outline_color;
+        std::vector<std::array<double, 4>> outline_colors;
+        std::array<double, 4> fill_color;
+        double thickness;
+    } PointsAnnotation;
+
+    /**
+     * @brief Describe text annotations
+     * 
+     */
+    typedef struct TextAnnotation{
+        uint64_t timestamp;
+        std::array<int, 2> position;
+        std::string text;
+        double font_size;
+        std::array<double, 4> text_color;
+        std::array<double, 4> background_color;
+    } TextAnnotation;
+    
+    /**
+     * @brief Add image annotation to all connexion
+     * 
+     * @param channel_name Channel to which push the data
+     * @param circle_annotations all circle annotation
+     * @param points_annotations all points annotation
+     * @param text_annotations all text annotation
+     * @param timestamp timestamp to which the data will be pushed
+     */
+    void add_image_annotation_to_all(std::string const& channel_name, std::vector<CircleAnnotation> const &circle_annotations, std::vector<PointsAnnotation> const &points_annotations, std::vector<TextAnnotation> const &text_annotations, uint64_t timestamp);
+    /**
+     * @brief Add image annotation to a list of connexion
+     * 
+     * @param connection_identifier lits of connexion name or identier
+     * @param channel_name Channel to which push the data
+     * @param circle_annotations all circle annotation
+     * @param points_annotations all points annotation
+     * @param text_annotations all text annotation
+     * @param timestamp timestamp to which the data will be pushed 
+     */
+    void add_image_annotation_to(std::vector<std::string> const &connection_identifier, std::string const& channel_name, std::vector<CircleAnnotation> const &circle_annotations, std::vector<PointsAnnotation> const &points_annotations, std::vector<TextAnnotation> const &text_annotations, uint64_t timestamp);
+    /**
+     * @brief Add image annotation to a specific channel
+     * 
+     * @param connection_identifier connexion name or identifier
+     * @param channel_name Channel to which push the data
+     * @param circle_annotations all circle annotation
+     * @param points_annotations all points annotation
+     * @param text_annotations all text annotation
+     * @param timestamp timestamp to which the data will be pushed  
+     */
+    void add_image_annotation_to(std::string const &connection_identifier, std::string const& channel_name, std::vector<CircleAnnotation> const &circle_annotations, std::vector<PointsAnnotation> const &points_annotations, std::vector<TextAnnotation> const &text_annotations, uint64_t timestamp);
+
 };
 
 #endif

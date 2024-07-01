@@ -10,7 +10,7 @@ std::string get_frame_transform_schema();
 std::string get_scene_update_schema();
 std::string get_log_schema();
 std::string get_compressed_image_schema();
-
+std::string get_image_annotation_schema();
 
 
 #endif
