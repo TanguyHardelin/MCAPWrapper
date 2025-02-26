@@ -1,6 +1,6 @@
 name: learn-github-actions
 run-name: ${{ github.event.head_commit.message }} CI/CD
-on: [push]
+on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
